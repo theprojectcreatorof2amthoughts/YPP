@@ -1,0 +1,79 @@
+## Extended mathematics: integer helpers, sequences, interpolation and comparisons.
+define mathx_factorial(n)
+    when n < 0 doit
+        give void
+    done
+    when n <= 1 doit
+        give 1
+    done
+    give n * mathx_factorial(n - 1)
+done
+
+define mathx_gcd(a, b)
+    when b == 0 doit
+        give abs(a)
+    done
+    give mathx_gcd(b, a % b)
+done
+
+define mathx_lcm(a, b)
+    when a == 0 both b == 0 doit
+        give 0
+    done
+    give abs((a / mathx_gcd(a, b)) * b)
+done
+
+define mathx_is_even(n)
+    give n % 2 == 0
+done
+
+define mathx_is_odd(n)
+    give n % 2 ~= 0
+done
+
+define mathx_is_prime(n)
+    when n < 2 doit
+        give no
+    done
+    when n == 2 doit
+        give yes
+    done
+    when n % 2 == 0 doit
+        give no
+    done
+    stash divisor = 3
+    repeatwhile divisor <= sqrt(n) execute
+        when n % divisor == 0 doit
+            give no
+        done
+        divisor = divisor + 2
+    done
+    give yes
+done
+
+define mathx_fibonacci(index)
+    when index < 0 doit
+        give void
+    done
+    stash a = 0
+    stash b = 1
+    stash i = 0
+    repeatwhile i < floor(index) execute
+        stash next_value = a + b
+        a = b
+        b = next_value
+        i = i + 1
+    done
+    give a
+done
+
+define mathx_map_range(value, input_min, input_max, output_min, output_max)
+    when input_max == input_min doit
+        give void
+    done
+    give output_min + (value - input_min) * (output_max - output_min) / (input_max - input_min)
+done
+
+define mathx_approximately(a, b, tolerance)
+    give abs(a - b) <= abs(tolerance)
+done

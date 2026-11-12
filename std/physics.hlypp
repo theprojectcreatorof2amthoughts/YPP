@@ -1,0 +1,56 @@
+## Introductory classical-physics calculations. Use consistent SI units.
+define physics_speed(distance, time)
+    when time == 0 doit
+        give void
+    done
+    give distance / time
+done
+
+define physics_distance(speed, time)
+    give speed * time
+done
+
+define physics_acceleration(final_velocity, initial_velocity, time)
+    when time == 0 doit
+        give void
+    done
+    give (final_velocity - initial_velocity) / time
+done
+
+define physics_force(mass, acceleration)
+    give mass * acceleration
+done
+
+define physics_weight(mass, gravity)
+    give mass * gravity
+done
+
+define physics_kinetic_energy(mass, velocity)
+    give 0.5 * mass * velocity ** 2
+done
+
+define physics_potential_energy(mass, gravity, height)
+    give mass * gravity * height
+done
+
+define physics_density(mass, volume)
+    when volume == 0 doit
+        give void
+    done
+    give mass / volume
+done
+
+define physics_pressure(force, area)
+    when area == 0 doit
+        give void
+    done
+    give force / area
+done
+
+define physics_ohms_voltage(current, resistance)
+    give current * resistance
+done
+
+define physics_electrical_power(voltage, current)
+    give voltage * current
+done

@@ -1,0 +1,41 @@
+## Statistics helpers for scalar samples and weighted values.
+define stats_percentage(part, whole)
+    when whole == 0 doit
+        give void
+    done
+    give (part / whole) * 100
+done
+
+define stats_percent_change(old_value, new_value)
+    when old_value == 0 doit
+        give void
+    done
+    give ((new_value - old_value) / abs(old_value)) * 100
+done
+
+define stats_weighted_mean(value_a, weight_a, value_b, weight_b)
+    when weight_a + weight_b == 0 doit
+        give void
+    done
+    give (value_a * weight_a + value_b * weight_b) / (weight_a + weight_b)
+done
+
+define stats_midrange(minimum, maximum)
+    give (minimum + maximum) / 2
+done
+
+define stats_z_score(value, mean_value, standard_deviation)
+    when standard_deviation == 0 doit
+        give void
+    done
+    give (value - mean_value) / standard_deviation
+done
+
+define stats_variance_two(a, b)
+    stash mean_value = (a + b) / 2
+    give ((a - mean_value) ** 2 + (b - mean_value) ** 2) / 2
+done
+
+define stats_standard_deviation_two(a, b)
+    give sqrt(stats_variance_two(a, b))
+done

@@ -1,0 +1,32 @@
+## Lightweight test assertions. Each assertion returns yes/no and reports failures.
+define testing_equal(actual, expected, label)
+    when actual == expected doit
+        give yes
+    done
+    errstate <^ "TEST FAILED: " .. label
+    give no
+done
+
+define testing_true(value, label)
+    when value doit
+        give yes
+    done
+    errstate <^ "TEST FAILED: " .. label
+    give no
+done
+
+define testing_false(value, label)
+    when invert(value) doit
+        give yes
+    done
+    errstate <^ "TEST FAILED: " .. label
+    give no
+done
+
+define testing_approximately(actual, expected, tolerance, label)
+    when abs(actual - expected) <= abs(tolerance) doit
+        give yes
+    done
+    errstate <^ "TEST FAILED: " .. label
+    give no
+done
