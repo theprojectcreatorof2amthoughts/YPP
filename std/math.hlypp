@@ -1,0 +1,9 @@
+// YPP mathematical helper library.
+// This library is embedded as source and is intended for !#inclib imports.
+define square(number value) {
+    give value * value;
+}
+
+define cube(number value) {
+    give value * value * value;
+}

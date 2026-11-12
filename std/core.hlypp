@@ -1,8 +1,6 @@
-// YPP core header library (starter).
-// This file documents core declarations available to .ycpp translation units.
-// Built-in declarations are currently recognized by the front-end; runtime
-// implementations will be added in the next implementation milestone.
-
+// YPP core header library.
+// Embedded automatically by Make and CMake builds.
+// The runtime-facing declarations are implemented by the YPP executable.
 define ypp_version() {
-    give "0.1.0";
+    give "0.2.0";
 }

@@ -1,7 +1,5 @@
-build/
-cmake-build-*/
-.vscode/
-.idea/
+/build/
+/ypp
 *.o
 *.obj
 *.exe
