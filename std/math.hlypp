@@ -1,8 +1,7 @@
-// YPP mathematical helper library.
-define square(number value) {
-    give value * value;
-}
-
-define cube(number value) {
-    give value * value * value;
-}
+## YPP math helper library.
+define square(value)
+    give value * value
+done
+define cube(value)
+    give value * value * value
+done

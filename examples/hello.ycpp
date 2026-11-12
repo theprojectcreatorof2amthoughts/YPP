@@ -1,17 +1,11 @@
-!#include <string>
-!#inclib %std/core.hlypp%
-
-stash int(score) = 100;
-
-define greet(string name) {
-    writescrn >^ "Hello, " + name;
-    give 0;
-}
-
-define main() {
-    when (score >= 50) {
-        greet("YPP");
-    } else {
-        writescrn >^ "Keep learning!";
-    }
-}
+!#inclib %std/math.hlypp%
+stash score = 100
+define greet(name)
+    writescrn >^ "Hello, " .. name
+done
+when score >= 50 doit
+    greet("YPP")
+    writescrn >^ square(9)
+else
+    writescrn >^ "Keep learning"
+done

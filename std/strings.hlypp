@@ -1,4 +1,4 @@
-// YPP string helper library.
-define joined(string left, string right) {
-    give left + right;
-}
+## YPP string helper library.
+define joined(left, right)
+    give left .. right
+done

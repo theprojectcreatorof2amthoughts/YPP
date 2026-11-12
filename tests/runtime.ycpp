@@ -1,0 +1,35 @@
+## Integration coverage: execution, functions, control flow, built-ins, memory, imports and C++ host calls.
+!#inclib %std/math.hlypp%
+!#libinc "std/strings.hlypp"
+
+stash base = 7
+stash total = cpp_add(base, 5)
+when total == 12 doit
+    writescrn >^ "runtime-ok"
+else
+    errstate <^ "runtime-failed"
+done
+
+define factorial(n)
+    when n <= 1 doit
+        give 1
+    done
+    give n * factorial(n - 1)
+done
+writescrn >^ factorial(5)
+writescrn >^ square(9)
+writescrn >^ joined("Y", "PP")
+
+stash counter = 3
+repeatwhile counter > 0 execute
+    writescrn >^ counter
+    counter = counter - 1
+done
+
+memdesig !$buffer, 4
+memwrite(!$buffer, 0, 65)
+writescrn >^ memread(!$buffer, 0)
+writescrn >^ upper("ypp")
+writescrn >^ sqrt(81)
+writescrn >^ sum(1, 2, 3, 4)
+writescrn >^ substring("YPP runtime", 4, 7)

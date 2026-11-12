@@ -15,6 +15,15 @@ int cpp_add(const YPPValue *args, size_t count, YPPValue *result, char *error, s
     result->number_value = args[0].number_value + args[1].number_value;
     return 1;
 }
+std::string library_key(const char *argument) {
+    std::string path(argument);
+    const auto slash = path.find_last_of("/\\");
+    if (slash != std::string::npos) path.erase(0, slash + 1);
+    const std::string suffix = ".hlypp";
+    if (path.size() >= suffix.size() && path.compare(path.size() - suffix.size(), suffix.size(), suffix) == 0)
+        path.erase(path.size() - suffix.size());
+    return path;
+}
 void usage() {
     std::cout << "YPP 0.2.0 - Y++ hybrid C/C++ language runtime\n"
                  "Usage:\n  ypp [script.ycpp]             Run a program (no file starts the REPL)\n"
@@ -33,8 +42,9 @@ int main(int argc, char **argv) {
         return 0;
     }
     if (argc == 3 && std::string(argv[1]) == "--show-lib") {
-        const auto *source = y_embedded_library(argv[2]);
-        if (!source) { std::cerr << "YPP: embedded library not found: " << argv[2] << '\n'; return 1; }
+        const auto key = library_key(argv[2]);
+        const auto *source = y_embedded_library(key.c_str());
+        if (!source) { std::cerr << "YPP: embedded library not found: " << key << '\n'; return 1; }
         std::cout << source; return 0;
     }
     if (argc == 3 && std::string(argv[1]) == "--check") return ypp_runtime_check_file(argv[2]);
