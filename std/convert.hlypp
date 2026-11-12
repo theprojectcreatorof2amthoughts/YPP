@@ -1,0 +1,44 @@
+## Unit conversions. Functions use descriptive names and return numeric values.
+define convert_celsius_to_fahrenheit(celsius)
+    give celsius * 9 / 5 + 32
+done
+
+define convert_fahrenheit_to_celsius(fahrenheit)
+    give (fahrenheit - 32) * 5 / 9
+done
+
+define convert_km_to_miles(kilometers)
+    give kilometers * 0.621371192237334
+done
+
+define convert_miles_to_km(miles)
+    give miles / 0.621371192237334
+done
+
+define convert_kg_to_pounds(kilograms)
+    give kilograms * 2.204622621848776
+done
+
+define convert_pounds_to_kg(pounds)
+    give pounds / 2.204622621848776
+done
+
+define convert_hours_to_seconds(hours)
+    give hours * 3600
+done
+
+define convert_minutes_to_seconds(minutes)
+    give minutes * 60
+done
+
+define convert_seconds_to_minutes(seconds)
+    give seconds / 60
+done
+
+define convert_degrees_to_radians(degrees_value)
+    give radians(degrees_value)
+done
+
+define convert_radians_to_degrees(radians_value)
+    give degrees(radians_value)
+done

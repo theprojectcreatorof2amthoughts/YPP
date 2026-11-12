@@ -1,0 +1,32 @@
+## Reusable boolean and decision helpers.
+define logic_xor(a, b)
+    give (a either b) both invert(a both b)
+done
+
+define logic_nand(a, b)
+    give invert(a both b)
+done
+
+define logic_nor(a, b)
+    give invert(a either b)
+done
+
+define logic_all_three(a, b, c)
+    give a both b both c
+done
+
+define logic_any_three(a, b, c)
+    give a either b either c
+done
+
+define logic_in_bounds(value, lower, upper)
+    give value >= lower both value <= upper
+done
+
+define logic_choose(condition, when_true, when_false)
+    when condition doit
+        give when_true
+    else
+        give when_false
+    done
+done

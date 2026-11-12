@@ -1,0 +1,40 @@
+## Common input validation helpers. Email validation is intentionally basic, not RFC-complete.
+define validate_is_integer(value)
+    give isnumber(value) both floor(value) == value
+done
+
+define validate_in_range(value, minimum, maximum)
+    give isnumber(value) both value >= minimum both value <= maximum
+done
+
+define validate_not_empty(value)
+    give isstring(value) both length(value) > 0
+done
+
+define validate_has_text(value)
+    give isstring(value) both length(stringx_trim(value)) > 0
+done
+
+define validate_email_basic(value)
+    when isstring(value) == no doit
+        give no
+    done
+    when contains(value, "@") == no doit
+        give no
+    done
+    when contains(value, ".") == no doit
+        give no
+    done
+    when length(value) < 5 doit
+        give no
+    done
+    give yes
+done
+
+define validate_starts_with_letter(value)
+    when length(value) == 0 doit
+        give no
+    done
+    stash first = charat(value, 0)
+    give lower(first) ~= upper(first)
+done

@@ -1,0 +1,36 @@
+## 3D geometry helpers. Angles are in radians unless a function says otherwise.
+define geo3_distance(x1, y1, z1, x2, y2, z2)
+    give sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
+done
+
+define geo3_sphere_volume(radius)
+    give (4 / 3) * 3.141592653589793 * radius ** 3
+done
+
+define geo3_sphere_surface(radius)
+    give 4 * 3.141592653589793 * radius ** 2
+done
+
+define geo3_cylinder_volume(radius, height)
+    give 3.141592653589793 * radius ** 2 * height
+done
+
+define geo3_cylinder_surface(radius, height)
+    give 2 * 3.141592653589793 * radius * (radius + height)
+done
+
+define geo3_cone_volume(radius, height)
+    give (3.141592653589793 * radius ** 2 * height) / 3
+done
+
+define geo3_cube_volume(side)
+    give side ** 3
+done
+
+define geo3_cube_surface(side)
+    give 6 * side ** 2
+done
+
+define geo3_dot(ax, ay, az, bx, by, bz)
+    give ax * bx + ay * by + az * bz
+done

@@ -1,0 +1,64 @@
+## Extended string helpers built on YPP's byte-oriented string built-ins.
+define stringx_left(value, count)
+    give substring(value, 0, clamp(floor(count), 0, length(value)))
+done
+
+define stringx_right(value, count)
+    stash amount = clamp(floor(count), 0, length(value))
+    give substring(value, length(value) - amount, length(value))
+done
+
+define stringx_trim(value)
+    stash first = 0
+    stash last = length(value)
+    repeatwhile first < last both contains(" ", charat(value, first)) execute
+        first = first + 1
+    done
+    repeatwhile last > first both contains(" ", charat(value, last - 1)) execute
+        last = last - 1
+    done
+    give substring(value, first, last)
+done
+
+define stringx_count(value, needle)
+    when length(needle) == 0 doit
+        give 0
+    done
+    stash total = 0
+    stash position = 0
+    repeatwhile position <= length(value) - length(needle) execute
+        when substring(value, position, position + length(needle)) == needle doit
+            total = total + 1
+            position = position + length(needle)
+        else
+            position = position + 1
+        done
+    done
+    give total
+done
+
+define stringx_is_palindrome(value)
+    stash normalized = lower(value)
+    stash left_index = 0
+    stash right_index = length(normalized) - 1
+    repeatwhile left_index < right_index execute
+        when charat(normalized, left_index) ~= charat(normalized, right_index) doit
+            give no
+        done
+        left_index = left_index + 1
+        right_index = right_index - 1
+    done
+    give yes
+done
+
+define stringx_repeat(value, count)
+    give repeat(value, max(0, floor(count)))
+done
+
+define stringx_reverse(value)
+    give reverse(value)
+done
+
+define stringx_contains_any(value, candidates)
+    give contains(value, candidates)
+done
