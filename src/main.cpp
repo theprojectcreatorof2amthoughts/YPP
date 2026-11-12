@@ -6,8 +6,7 @@
 #include <iostream>
 #include <iterator>
 #include <string>
-namespace {
-int cpp_add(const YPPValue *args, size_t count, YPPValue *result, char *error, size_t capacity) {
+extern "C" int cpp_add(const YPPValue *args, size_t count, YPPValue *result, char *error, size_t capacity) {
     if (count != 2 || args[0].kind != YPP_VALUE_NUMBER || args[1].kind != YPP_VALUE_NUMBER) {
         std::snprintf(error, capacity, "cpp_add expects exactly two numbers"); return 0;
     }
@@ -24,6 +23,7 @@ std::string library_key(const char *argument) {
         path.erase(path.size() - suffix.size());
     return path;
 }
+namespace {
 void usage() {
     std::cout << "YPP 0.2.0 - Y++ hybrid C/C++ language runtime\n"
                  "Usage:\n  ypp [script.ycpp]             Run a program (no file starts the REPL)\n"

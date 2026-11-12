@@ -59,7 +59,7 @@ The public C-compatible bridge is include/ypp/bridge.h. A C++ host can register 
 ~~~cpp
 #include "ypp/bridge.h"
 
-static int add_native(const YPPValue *args, size_t count,
+extern "C" int add_native(const YPPValue *args, size_t count,
                       YPPValue *result, char *error, size_t error_capacity) {
     if (count != 2 || args[0].kind != YPP_VALUE_NUMBER ||
         args[1].kind != YPP_VALUE_NUMBER) {

@@ -1,6 +1,7 @@
 ## Integration coverage: execution, functions, control flow, built-ins, memory, imports and C++ host calls.
 !#inclib %std/math.hlypp%
 !#libinc "std/strings.hlypp"
+!#adeq "examples/quicktools.yaq"
 
 stash base = 7
 stash total = cpp_add(base, 5)
@@ -19,6 +20,7 @@ done
 writescrn >^ factorial(5)
 writescrn >^ square(9)
 writescrn >^ joined("Y", "PP")
+writescrn >^ quick_square(6)
 
 stash counter = 3
 repeatwhile counter > 0 execute
@@ -33,3 +35,7 @@ writescrn >^ upper("ypp")
 writescrn >^ sqrt(81)
 writescrn >^ sum(1, 2, 3, 4)
 writescrn >^ substring("YPP runtime", 4, 7)
+
+stash custom = 0
+!$scratch = 11
+writescrn >^ !$scratch
