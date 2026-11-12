@@ -1,74 +1,95 @@
-# YPP
+# YPP (Y++)
 
-**YPP** is a C++20-powered language project that preserves Y_'s distinctive vocabulary while adding a C++ foundation and interoperability direction.
+YPP is a hybrid C/C++ programming language project: it carries Y_'s interpreter/runtime model forward in C and provides a C++20 host, tooling, and native-function bridge. The language keeps Y_'s vocabulary rather than replacing it with C-like aliases.
 
 ## File formats
 
 | Extension | Purpose |
 |---|---|
-| .ycpp | YPP source code |
-| .hlypp | YPP Header Library |
+| .ycpp | YPP source program |
+| .hlypp | Header Library YPP |
+| .yaq | External Adequit helper (same executable-helper role as Y_) |
 
-YPP is a separate project from Y_. Its vocabulary is additive: existing words such as stash, define, give, when, doit, else, done, repeatwhile, execute, escape, writescrn, errstate, both, either, and invert are not renamed or replaced with conventional aliases.
+YPP is separate from Y_. It preserves stash, define, give, when, doit, else, done, repeatwhile, execute, escape, writescrn >^, errstate <^, both, either, invert, !$name, and the !# directives.
 
 ## Build
 
-YPP supports the same simple Make-first workflow as Y_ as well as CMake. Requires GNU Make (for Make builds), a C++20 compiler, and CMake 3.20+ (for CMake builds).
+Requires a C11 compiler, a C++20 compiler, GNU Make or CMake 3.20+.
 
 ~~~sh
 make
+./ypp examples/hello.ycpp
+./ypp tests/runtime.ycpp
 ./ypp --check examples/hello.ycpp
-./ypp --tokens examples/hello.ycpp
 ./ypp --list-libs
-./ypp --show-lib std/core.hlypp
+./ypp --show-lib std/math.hlypp
 ~~~
 
-CMake alternative:
+CMake:
 
 ~~~sh
-cmake -S . -B build
-cmake --build build --config Release
-./build/ypp --check examples/hello.ycpp
+cmake -S . -B build-cmake
+cmake --build build-cmake --config Release
+./build-cmake/ypp examples/hello.ycpp
 ~~~
 
-Clean generated Make artifacts with make clean.
+Use make clean to remove Make-generated artifacts. Both build systems discover .hlypp files under std/ and embed their contents into the executable.
 
-## Header libraries
+## Runtime capabilities
 
-Like Y_'s embedded .hly system, YPP automatically discovers every .hlypp file under std/ and embeds its source into the built executable. The library embedder validates file extensions, sorts paths deterministically, and rejects duplicate paths. Use ypp --list-libs to inspect the embedded library catalog and ypp --show-lib path.hlypp to inspect an embedded library's source.
+The Y_ interpreter core has been ported into YPP's C runtime and linked into a C++20 executable. It provides:
+- Values: void, number, string, boolean, function, and memory.
+- Nested environments, lexical closures, user-defined functions, recursion, and give.
+- when / doit / else / done, repeatwhile / execute / done, and escape.
+- writescrn >^ and errstate <^.
+- Custom variables using !$name and braced custom names.
+- Prompted input with !#inptype("prompt").
+- Embedded !#inclib %path.hlypp%, external !#libinc "path.hlypp", and external !#adeq "path.yaq" imports.
+- Checked byte buffers using memdesig, memread, and memwrite (up to 16 MiB).
+- Y_'s math, geometry, numeric conversion, predicates, aggregation, and string built-ins.
+- A persistent interactive prompt when ypp is run without a source file.
+- Import-depth and loop-iteration limits.
 
-The build-time embedding pipeline is implemented. Runtime execution of !#inclib / !#libinc and semantic evaluation of library contents are still being developed; embedding a library does not yet mean its declarations are executable.
+The original Y_ runtime's semantics and vocabulary are retained. YPP-specific file extensions are used for source and header libraries.
 
-## Current implementation status
+## C++ interoperability
 
-The current executable is still an early front end:
-- Location-aware lexer for identifiers, literals, operators, punctuation, comments, and directives.
-- Structural parser for blocks, declarations, functions, conditionals, loops, output, and give.
-- Syntax-check and token-inspection CLI.
-- Makefile and CMake builds with automatic .hlypp discovery and embedding.
+The public C-compatible bridge is include/ypp/bridge.h. A C++ host can register functions before starting the interpreter:
 
-Not implemented yet: runtime evaluation, full expression/type semantics, callable user functions, REPL, external library loading, execution of embedded libraries, memory operations, complete Y_ built-ins, native code generation, and C++ ABI bindings. These are tracked in docs/ROADMAP.md. YPP should not be described as feature-equivalent to Y_ until those runtime milestones are completed.
+~~~cpp
+#include "ypp/bridge.h"
 
-## Starter syntax
-
-~~~ycpp
-!#include <string>
-!#inclib %std/core.hlypp%
-
-stash int(score) = 100;
-
-define greet(string name) {
-    writescrn >^ "Hello, " + name;
-    give 0;
-}
-
-define main() {
-    when (score >= 50) {
-        greet("YPP");
-    } else {
-        writescrn >^ "Keep learning!";
+static int add_native(const YPPValue *args, size_t count,
+                      YPPValue *result, char *error, size_t error_capacity) {
+    if (count != 2 || args[0].kind != YPP_VALUE_NUMBER ||
+        args[1].kind != YPP_VALUE_NUMBER) {
+        (void)error;
+        (void)error_capacity;
+        return 0;
     }
+    result->kind = YPP_VALUE_NUMBER;
+    result->number_value = args[0].number_value + args[1].number_value;
+    return 1;
+}
+
+int main(int argc, char **argv) {
+    ypp_register_native("add_native", add_native);
+    return ypp_runtime_main(argc, argv);
 }
 ~~~
 
-See the starter grammar in docs/GRAMMAR.md for the syntax currently recognized by the parser.
+Registered host functions are callable from YPP source like ordinary functions. Supported bridge values are void, number, string, and boolean. String results are copied by the runtime before the callback returns. The bundled CLI registers cpp_add as a working example.
+
+This is a host-function ABI bridge, not a general C++ header parser or automatic binding generator. Native code generation and C++ class/object marshalling are future work.
+
+## Library behavior
+
+!#inclib %std/math.hlypp% resolves the embedded library by its filename (math) and executes it in the caller's environment. !#libinc "std/strings.hlypp" reads an external .hlypp file and executes it in the current environment. .hlypp replaces .hly for YPP; .yaq remains the external Adequit extension.
+
+## Examples and tests
+
+- examples/hello.ycpp demonstrates functions, conditionals, output, and an embedded library.
+- tests/runtime.ycpp exercises runtime evaluation, recursion, loops, strings, memory, imports, and the C++ host bridge.
+- .github/workflows/build.yml builds with both Make and CMake and runs smoke tests.
+
+YPP is experimental. It does not claim C++ language compatibility, static type checking, a C++ parser, or native compilation of YPP programs.

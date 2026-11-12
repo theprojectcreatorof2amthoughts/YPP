@@ -1,45 +1,61 @@
-# YPP starter grammar
+# YPP language syntax
 
-This document describes the initial structural grammar accepted by the YPP front end. YPP is still experimental; this is not a claim of complete C++ compatibility.
+YPP keeps Y_'s original language vocabulary and tree-walk execution model. Source programs use .ycpp; Header Library YPP modules use .hlypp.
 
-## Source and library files
+## Statements
 
-- Source translation units use `.ycpp`.
-- Header libraries use `.hlypp`.
-- Directives begin with `!#` and occupy the rest of their physical line. The first supported directive spellings are `!#include` and `!#inclib`. The lexer preserves directives as tokens; include resolution is not implemented yet.
+~~~text
+stash variable = expression
+define function_name(parameter, ...)
+    statements
+done
+when condition doit
+    statements
+else
+    statements
+done
+repeatwhile condition execute
+    statements
+done
+give [expression]
+escape
+writescrn >^ expression
+errstate <^ expression
+memdesig !$buffer, size
+memwrite(!$buffer, index, byte)
+stash value = memread(!$buffer, index)
+~~~
 
-## Preserved Y_ vocabulary
+Statements may be separated by newlines or semicolons. ## begins a line comment. Function declarations close with done; give returns from the current function. escape exits the nearest active loop.
 
-The front end recognizes these words as ordinary identifier tokens, not renamed aliases: `stash`, `define`, `give`, `when`, `doit`, `else`, `done`, `repeatwhile`, `execute`, `escape`, `writescrn`, `errstate`, `both`, `either`, and `invert`.
+## Values and operators
 
-The structural parser currently assigns statement meaning to `stash`, `define`, `give`, `when`, `else`, `repeatwhile`, and `writescrn`. Other vocabulary remains available to later semantic/runtime stages. No `print`, `let`, or `if` aliases are introduced.
+Values are void, numbers, strings, yes, no, functions, and memory buffers. void and no are falsey; other values are truthy.
 
-## Structural grammar (simplified)
+Operators include +, -, *, /, %, **, //, .., ==, ~=, <, <=, >, >=, both, either, and unary invert. + concatenates two strings; .. is the explicit string concatenation operator. both and either short-circuit and return operand values.
 
-```ebnf
-translation-unit = { declaration | statement } ;
-declaration      = directive | variable | function ;
-directive        = "!#" , { any-character-except-newline } ;
-variable         = "stash" , type , "(" , identifier , ")" , [ "=" , expression ] , ";" ;
-function         = "define" , identifier , "(" , [ parameter-list ] , ")" , block ;
-statement        = block | conditional | loop | output | give | expression-statement ;
-conditional      = "when" , "(" , expression , ")" , block , [ "else" , block ] ;
-loop             = "repeatwhile" , "(" , expression , ")" , block ;
-output           = "writescrn" , ">^" , expression , ";" ;
-give             = "give" , [ expression ] , ";" ;
-block            = "{" , { declaration | statement } , "}" ;
-```
+## Custom variables and directives
 
-Expressions are currently token-preserved rather than fully type-checked or evaluated. This allows the lexer/parser foundation to mature without falsely claiming a complete C++ expression implementation.
+- !$name accesses a custom variable. Braced custom names may contain punctuation or spaces.
+- !#inptype("prompt") reads one line and returns a string; end-of-file returns void.
+- !#inclib %path.hlypp% executes an embedded .hlypp library.
+- !#libinc "path.hlypp" executes an external .hlypp library from disk.
+- !#adeq "path.yaq" executes an external Adequit in the caller's environment.
 
-## Lexer behavior
+The embedder maps a library by its filename without the .hlypp suffix. Duplicate library basenames are rejected at build time. Nested imports have a depth limit of 64.
 
-The lexer tracks 1-based line and column positions; recognizes identifiers, numeric literals, strings, character literals, punctuation, operators, and directives; and skips C++-style line and block comments.
+## Built-ins
 
-## Current limitations
+The runtime includes:
+- type, tostring, tonumber, length, input
+- memread, memwrite
+- abs, sqrt, floor, ceil, round, pow, min, max, sin, cos, tan, log, exp, sign
+- isnumber, isstring, isboolean, isvoid, isfinite, isnan
+- upper, lower, contains, startswith, endswith, substring, charat, replace, repeat, reverse
+- sum, average, clamp, lerp, hypot, atan2, radians, degrees
 
-- No evaluator, native code generation, or C++ ABI bridge yet.
-- No type checking or overload resolution.
-- No include path lookup or `.hlypp` module loader yet.
-- C++ syntax is not fully parsed. Expression token sequences are retained for later compiler stages.
-- Error recovery is intentionally basic.
+String indexing and lengths are byte-based. Memory allocation is capped at 16 MiB and loops are capped at one million iterations.
+
+## C++ host bridge
+
+A host C++ program includes ypp/bridge.h, registers callbacks with ypp_register_native, then starts the runtime. Native callbacks can exchange void, number, string, and boolean values. See the README for a complete example.

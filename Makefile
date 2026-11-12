@@ -27,15 +27,15 @@ $(EMBEDDED_SOURCE): FORCE $(EMBEDDER) $(HLYPP_FILES) src/embedded_libraries.h
 	$(EMBEDDER) $@.tmp $(HLYPP_FILES)
 	@if test -f $@ && cmp -s $@.tmp $@; then rm -f $@.tmp; else mv $@.tmp $@; fi
 libraries: $(EMBEDDED_SOURCE)
-$(BUILD_DIR)/runtime.o: src/runtime.c src/runtime.h src/memory.h src/file_io.h src/embedded_libraries.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -Isrc -c $< -o $@
+$(BUILD_DIR)/runtime.o: src/runtime.c src/runtime.h include/ypp/bridge.h src/memory.h src/file_io.h src/embedded_libraries.h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -Iinclude -Isrc -c $< -o $@
 $(BUILD_DIR)/memory.o: src/memory.c src/memory.h | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -Isrc -c $< -o $@
 $(BUILD_DIR)/file_io.o: src/file_io.c src/file_io.h | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -Isrc -c $< -o $@
 $(BUILD_DIR)/embedded_libraries.o: $(EMBEDDED_SOURCE) src/embedded_libraries.h | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -Isrc -c $(EMBEDDED_SOURCE) -o $@
-$(BUILD_DIR)/main.o: src/main.cpp src/runtime.h src/embedded_libraries.h | $(BUILD_DIR)
+$(BUILD_DIR)/main.o: src/main.cpp src/runtime.h include/ypp/bridge.h src/embedded_libraries.h | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 $(BUILD_DIR)/lexer.o: src/lexer.cpp include/ypp/lexer.hpp include/ypp/token.hpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@

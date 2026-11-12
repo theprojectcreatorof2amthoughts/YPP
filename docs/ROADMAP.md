@@ -1,44 +1,36 @@
-# YPP capability roadmap
+# YPP capability status
 
-YPP's target is to reach and then extend the practical capabilities of Y_ while keeping YPP a C++20 implementation. This is a work plan, not a claim that the listed capabilities already exist.
+YPP is a hybrid C/C++ implementation. The interpreter semantics are ported from Y_'s C runtime; C++20 provides the executable host, developer tooling, and an explicit native-function bridge.
 
-## Y_ capability parity
+| Capability | Status |
+|---|---|
+| Makefile and CMake builds | Implemented |
+| Automatic .hlypp embedding | Implemented |
+| Lexer and token inspection | Implemented (C++ tooling lexer) |
+| Recursive-descent language parser | Implemented in C runtime |
+| Tree-walk execution and expression evaluation | Implemented |
+| Values and nested environments | Implemented |
+| Functions, recursion, closures, give | Implemented |
+| when / doit / else / done | Implemented |
+| repeatwhile / execute / done, escape | Implemented |
+| writescrn >^, errstate <^ | Implemented |
+| !$name and braced custom names | Implemented |
+| !#inptype(...) | Implemented |
+| Embedded and external .hlypp imports | Implemented |
+| External .yaq Adequits | Implemented |
+| Checked memory operations | Implemented |
+| Math, geometry, string, conversion and predicate built-ins | Implemented |
+| Persistent REPL | Implemented |
+| C++ host-function ABI bridge | Implemented for void/number/string/boolean |
+| General C++ class/object marshalling | Not implemented |
+| Automatic C++ header parsing/binding generation | Not implemented |
+| Native machine-code generation for .ycpp | Not implemented |
 
-| Y_ capability | YPP target | Current state |
-|---|---|---|
-| Lexer and recursive-descent parser | C++ lexer/parser with source diagnostics | Initial lexer and structural parser exist |
-| Tree-walk execution | Typed C++ runtime and evaluator | Not implemented |
-| Values: void, number, string, boolean, function, memory | C++ value model and managed ownership | Not implemented |
-| Nested environments and closures | Lexical scopes and callable closures | Not implemented |
-| Procedures and give | User-defined functions and return propagation | Parser structure only |
-| when / doit / else / done | Preserve original branch vocabulary; brace syntax may coexist | Partial brace-form parser only |
-| repeatwhile / execute / done, escape | Loops, break/escape propagation, iteration guard | Partial brace-form loop parser only |
-| writescrn >^ and errstate <^ | Standard output and diagnostic output | writescrn parser only |
-| !$name custom variables | Compatible custom-name tokenization and environment lookup | Not implemented |
-| !#inptype(...) | Prompted input expression | Not implemented |
-| !#inclib and !#libinc | Embedded and disk-loaded .hlypp imports | Build-time embedding only |
-| Adequit-like helper modules | YPP module/import mechanism with documented extension | Not designed |
-| Checked byte memory and memdesig / memread / memwrite | Bounds-checked memory values | Not implemented |
-| Math, geometry, predicates, numeric conversion | Built-in library with documented behavior | Not implemented |
-| String inspection and transformation | Built-in string library | Not implemented |
-| Interactive REPL | Persistent environment and multiline input | Not implemented |
-| Build-time library embedding | Automatic .hlypp discovery in Make and CMake | Implemented |
-| Native C++ interoperability | Explicit C++ declaration/bridge layer | Not implemented |
+## Remaining compiler extensions
 
-## Implementation sequence
+1. Design a stable object/value ownership ABI for C++ classes, references, and containers.
+2. Add opt-in C++ header binding generation with explicit ownership and exception rules.
+3. Design a native compilation pipeline (typed IR, optimization, C++/LLVM backend) if native output is desired.
+4. Improve source maps, diagnostics, and test coverage across Windows, Linux, and macOS.
 
-1. **Runtime core:** value representation, environments, expression evaluator, user functions, closures, and statement execution.
-2. **Language compatibility:** complete control-flow vocabulary, custom variables, input, output/error output, and loop escape semantics.
-3. **Library system:** resolve and execute embedded .hlypp modules; add disk imports, dependency tracking, cycle detection, and useful import diagnostics.
-4. **Standard library:** math, strings, numeric aggregation, geometry, memory, filesystem, and system helpers.
-5. **Developer experience:** persistent REPL, command-line options, source locations, diagnostics, and debugging/tracing.
-6. **C++ integration:** a documented bridge for C++ types/functions, safe ownership rules, and native compilation/linking.
-7. **Hardening:** portability, error handling, resource limits, performance, packaging, and documentation.
-
-## Design rules
-
-- YPP remains a separate project from Y_.
-- .ycpp is the source extension; .hlypp is the header-library extension.
-- Do not rename, remove, or replace Y_'s established vocabulary.
-- Keep C++20 as the implementation baseline.
-- A feature is only marked implemented after executable behavior exists; token recognition or parser acceptance alone is not runtime support.
+The current implementation is intended to match Y_'s interpreter capabilities while adding a working C++ host bridge. It is not a C++ compiler and does not claim native code generation.
