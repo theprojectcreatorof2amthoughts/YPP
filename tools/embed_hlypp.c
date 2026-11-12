@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
         for (int i = 2; i < argc; ++i)
             fprintf(output, "    case %d: return \"%s\";\n", i - 2, names[i - 2]);
         fputs("    default: return NULL;\n    }\n}\n", output);
-        fputs("const char *y_embedded_library(const char *name) {\\n", output);
+        fputs("const char *y_embedded_library(const char *name) {\n", output);
         for (int i = 2; i < argc; ++i)
             fprintf(output, "    if (strcmp(name, \"%s\") == 0) return y_library_%d;\n", names[i - 2], i - 2);
         fputs("    return NULL;\n}\n", output);
