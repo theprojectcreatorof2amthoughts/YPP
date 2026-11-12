@@ -1,0 +1,5 @@
+## Adequit imported by the YPP runtime integration test.
+!#inclib %std/math.hlypp%
+define quick_square(value)
+    give square(value)
+done

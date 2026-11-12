@@ -1,51 +1,73 @@
+#include "runtime.h"
+#include "embedded_libraries.h"
 #include "ypp/lexer.hpp"
-#include "ypp/parser.hpp"
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <string>
-
+extern "C" int cpp_add(const YPPValue *args, size_t count, YPPValue *result, char *error, size_t capacity) {
+    if (count != 2 || args[0].kind != YPP_VALUE_NUMBER || args[1].kind != YPP_VALUE_NUMBER) {
+        std::snprintf(error, capacity, "cpp_add expects exactly two numbers"); return 0;
+    }
+    result->kind = YPP_VALUE_NUMBER;
+    result->number_value = args[0].number_value + args[1].number_value;
+    return 1;
+}
+std::string library_key(const char *argument) {
+    std::string path(argument);
+    const auto slash = path.find_last_of("/\\");
+    if (slash != std::string::npos) path.erase(0, slash + 1);
+    const std::string suffix = ".hlypp";
+    if (path.size() >= suffix.size() && path.compare(path.size() - suffix.size(), suffix.size(), suffix) == 0)
+        path.erase(path.size() - suffix.size());
+    return path;
+}
 namespace {
 void usage() {
-    std::cout << "YPP 0.1.0 - Y++ front-end\n"
-                 "Usage: ypp [--check|--tokens] <file.ycpp>\n";
+    std::cout << "YPP 0.2.0 - Y++ hybrid C/C++ language runtime\n"
+                 "Usage:\n  ypp [script.ycpp]             Run a program (no file starts the REPL)\n"
+                 "  ypp --check <file.ycpp>       Parse without executing\n"
+                 "  ypp --tokens <file.ycpp>      Display lexical tokens\n"
+                 "  ypp --list-libs               List embedded .hlypp libraries\n"
+                 "  ypp --show-lib <path.hlypp>   Display an embedded library\n"
+                 "  ypp --version                 Show version\n";
 }
 }
-int main(int argc, char** argv) {
-    if (argc < 2) { usage(); return 2; }
-    std::string mode = "--check";
-    std::string path;
-    for (int i = 1; i < argc; ++i) {
-        const std::string arg = argv[i];
-        if (arg == "--help" || arg == "-h") { usage(); return 0; }
-        if (arg == "--tokens" || arg == "--check") mode = arg;
-        else path = arg;
+int main(int argc, char **argv) {
+    ypp_register_native("cpp_add", cpp_add);
+    if (argc == 2 && std::string(argv[1]) == "--version") { std::cout << "YPP 0.2.0\n"; return 0; }
+    if (argc == 2 && std::string(argv[1]) == "--list-libs") {
+        for (size_t i = 0; i < y_embedded_library_count(); ++i) std::cout << y_embedded_library_name(i) << '\n';
+        return 0;
     }
-    if (path.empty()) { usage(); return 2; }
-    if (path.size() < 5 || path.substr(path.size() - 5) != ".ycpp") {
-        std::cerr << "error: YPP source files must use the .ycpp extension\n";
-        return 2;
+    if (argc == 3 && std::string(argv[1]) == "--show-lib") {
+        const auto key = library_key(argv[2]);
+        const auto *source = y_embedded_library(key.c_str());
+        if (!source) { std::cerr << "YPP: embedded library not found: " << key << '\n'; return 1; }
+        std::cout << source; return 0;
     }
-    std::ifstream input(path, std::ios::binary);
-    if (!input) { std::cerr << "error: cannot open " << path << '\n'; return 2; }
-    const std::string source((std::istreambuf_iterator<char>(input)), {});
-    ypp::Lexer lexer(source);
-    auto tokens = lexer.scan();
-    if (mode == "--tokens") {
-        for (const auto& token : tokens)
+    if (argc == 3 && std::string(argv[1]) == "--check") return ypp_runtime_check_file(argv[2]);
+    if (argc == 3 && std::string(argv[1]) == "--tokens") {
+        const std::string path = argv[2];
+        if (path.size() <= 5 || path.substr(path.size() - 5) != ".ycpp") {
+            std::cerr << "YPP: source files must use .ycpp\n"; return 2;
+        }
+        std::ifstream input(path, std::ios::binary);
+        if (!input) { std::cerr << "YPP: cannot open " << path << '\n'; return 2; }
+        const std::string source((std::istreambuf_iterator<char>(input)), {});
+        ypp::Lexer lexer(source);
+        for (const auto &token : lexer.scan())
             std::cout << token.location.line << ':' << token.location.column << "  "
                       << ypp::tokenKindName(token.kind) << "  " << token.lexeme << '\n';
         return 0;
     }
-    ypp::Parser parser(std::move(tokens));
-    const auto ast = parser.parse();
-    (void)ast;
-    for (const auto& error : parser.errors())
-        std::cerr << path << ':' << error << '\n';
-    if (!parser.errors().empty()) {
-        std::cerr << "YPP: syntax check failed (" << parser.errors().size() << " issue(s))\n";
-        return 1;
+    if (argc > 2) { usage(); return 2; }
+    if (argc == 2) {
+        const std::string path = argv[1];
+        if (path.size() <= 5 || path.substr(path.size() - 5) != ".ycpp") {
+            std::cerr << "YPP: source files must use the .ycpp extension\n"; return 2;
+        }
     }
-    std::cout << "YPP: syntax structure accepted for " << path << '\n';
-    return 0;
+    return ypp_runtime_main(argc, argv);
 }

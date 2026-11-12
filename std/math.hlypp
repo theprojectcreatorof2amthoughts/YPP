@@ -1,0 +1,7 @@
+## YPP math helper library.
+define square(value)
+    give value * value
+done
+define cube(value)
+    give value * value * value
+done

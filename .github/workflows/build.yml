@@ -1,0 +1,34 @@
+name: YPP build and runtime tests
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+jobs:
+  make-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with Make
+        run: make -j2
+      - name: Runtime integration test
+        run: |
+          ./ypp tests/runtime.ycpp | tee runtime-output.txt
+          grep -q "runtime-ok" runtime-output.txt
+          grep -q "120" runtime-output.txt
+          grep -q "36" runtime-output.txt
+          ./ypp --check tests/runtime.ycpp
+          ./ypp --list-libs
+          ./ypp --show-lib std/math.hlypp
+      - name: Input directive test
+        run: printf 'input-ok\n' | ./ypp examples/input.ycpp | grep -q 'input-ok'
+  cmake-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build-cmake
+      - name: Build
+        run: cmake --build build-cmake --parallel 2
+      - name: Runtime smoke test
+        run: ./build-cmake/ypp examples/hello.ycpp
