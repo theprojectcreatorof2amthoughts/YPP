@@ -21,6 +21,10 @@ void Lexer::emit(TokenKind kind) {
 void Lexer::skipTrivia() {
     for (;;) {
         if (peek() == ' ' || peek() == '\r' || peek() == '\t' || peek() == '\n') { advance(); continue; }
+        if (peek() == '#' && peek(1) == '#') {
+            while (!atEnd() && peek() != '\n') advance();
+            continue;
+        }
         if (peek() == '/' && peek(1) == '/') {
             while (!atEnd() && peek() != '\n') advance();
             continue;
@@ -71,7 +75,63 @@ void Lexer::scanToken() {
     case '\'': scanQuoted('\'', TokenKind::Character); return;
     case '!':
         if (peek() == '#') { advance(); scanDirective(); }
-        else { while (!atEnd() && std::string_view("=<>!&|+-*/%^~").find(peek()) != std::string_view::npos) advance(); emit(TokenKind::Operator); }
+        else if (peek() == '
+    default: break;
+    }
+    if (std::isalpha(static_cast<unsigned char>(c)) || c == '_') { scanIdentifier(); return; }
+    if (std::isdigit(static_cast<unsigned char>(c))) { scanNumber(); return; }
+    if (std::string_view("+-*/%=<>!&|^~?").find(c) != std::string_view::npos) {
+        while (std::string_view("=<>!&|+-*/%^~?").find(peek()) != std::string_view::npos) advance();
+        emit(TokenKind::Operator); return;
+    }
+    emit(TokenKind::Unknown);
+}
+std::vector<Token> Lexer::scan() {
+    while (!atEnd()) {
+        skipTrivia();
+        if (atEnd()) break;
+        start_ = {current_, line_, column_};
+        scanToken();
+    }
+    tokens_.push_back({TokenKind::End, "", {current_, line_, column_}});
+    return tokens_;
+}
+std::string_view tokenKindName(TokenKind kind) noexcept {
+    switch (kind) {
+    case TokenKind::End: return "end"; case TokenKind::Identifier: return "identifier";
+    case TokenKind::Number: return "number"; case TokenKind::String: return "string";
+    case TokenKind::Character: return "character"; case TokenKind::Directive: return "directive";
+    case TokenKind::LeftParen: return "("; case TokenKind::RightParen: return ")";
+    case TokenKind::LeftBrace: return "{"; case TokenKind::RightBrace: return "}";
+    case TokenKind::LeftBracket: return "["; case TokenKind::RightBracket: return "]";
+    case TokenKind::Comma: return ","; case TokenKind::Semicolon: return ";";
+    case TokenKind::Colon: return ":"; case TokenKind::Dot: return ".";
+    case TokenKind::Operator: return "operator"; case TokenKind::Unknown: return "unknown";
+    }
+    return "unknown";
+}
+}
+) {
+            advance();
+            if (peek() == '{') {
+                advance();
+                while (!atEnd() && peek() != '}') {
+                    if (peek() == '\\' && (peek(1) == '}' || peek(1) == '\\')) advance();
+                    advance();
+                }
+                if (!match('}')) emit(TokenKind::Unknown);
+                else emit(TokenKind::Identifier);
+            } else {
+                if (!(std::isalpha(static_cast<unsigned char>(peek())) || peek() == '_')) emit(TokenKind::Unknown);
+                else {
+                    while (std::isalnum(static_cast<unsigned char>(peek())) || peek() == '_') advance();
+                    emit(TokenKind::Identifier);
+                }
+            }
+        } else {
+            while (!atEnd() && std::string_view("=<>!&|+-*/%^~").find(peek()) != std::string_view::npos) advance();
+            emit(TokenKind::Operator);
+        }
         return;
     default: break;
     }
