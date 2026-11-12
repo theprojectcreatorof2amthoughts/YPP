@@ -1,6 +1,5 @@
 // YPP core header library.
 // Embedded automatically by Make and CMake builds.
-// The runtime-facing declarations are implemented by the YPP executable.
 define ypp_version() {
     give "0.2.0";
 }

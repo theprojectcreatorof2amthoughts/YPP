@@ -1,48 +1,57 @@
 # YPP
 
-**YPP** is an experimental C++-powered language that brings the expressive, distinctive Y_ vocabulary into a C++-friendly programming environment.
+**YPP** is a C++20-powered language project that preserves Y_'s distinctive vocabulary while adding a C++ foundation and interoperability direction.
 
 ## File formats
 
 | Extension | Purpose |
 |---|---|
-| `.ycpp` | YPP source code |
-| `.hlypp` | YPP header library |
+| .ycpp | YPP source code |
+| .hlypp | YPP Header Library |
 
-YPP is a separate language and repository from Y_. Existing Y_ vocabulary is treated as compatibility surface: YPP builds on it rather than renaming it or replacing it with conventional aliases.
-
-## Current status
-
-The first implementation milestone is the C++20 front-end foundation:
-
-- A location-aware lexer with comments, strings, numbers, operators, and YPP directives.
-- A structural parser for blocks, declarations, functions, conditionals, loops, return-like `give` statements, and output statements.
-- A command-line checker for `.ycpp` files.
-- A written starter grammar and examples.
-
-This is an early compiler front end, not yet a complete C++ compiler or a full Y_ runtime. The parser deliberately preserves expression tokens instead of pretending to evaluate all C++ expressions. Runtime execution, C++ interop, module resolution, and the standard library are subsequent milestones.
+YPP is a separate project from Y_. Its vocabulary is additive: existing words such as stash, define, give, when, doit, else, done, repeatwhile, execute, escape, writescrn, errstate, both, either, and invert are not renamed or replaced with conventional aliases.
 
 ## Build
 
-Requires CMake 3.20+ and a C++20 compiler.
+YPP supports the same simple Make-first workflow as Y_ as well as CMake. Requires GNU Make (for Make builds), a C++20 compiler, and CMake 3.20+ (for CMake builds).
 
-```sh
+~~~sh
+make
+./ypp --check examples/hello.ycpp
+./ypp --tokens examples/hello.ycpp
+./ypp --list-libs
+./ypp --show-lib std/core.hlypp
+~~~
+
+CMake alternative:
+
+~~~sh
 cmake -S . -B build
 cmake --build build --config Release
-```
-
-Run the syntax checker:
-
-```sh
 ./build/ypp --check examples/hello.ycpp
-./build/ypp --tokens examples/hello.ycpp
-```
+~~~
 
-On Windows, run `build\ypp.exe` (or `build\Release\ypp.exe` with multi-config generators).
+Clean generated Make artifacts with make clean.
+
+## Header libraries
+
+Like Y_'s embedded .hly system, YPP automatically discovers every .hlypp file under std/ and embeds its source into the built executable. The library embedder validates file extensions, sorts paths deterministically, and rejects duplicate paths. Use ypp --list-libs to inspect the embedded library catalog and ypp --show-lib path.hlypp to inspect an embedded library's source.
+
+The build-time embedding pipeline is implemented. Runtime execution of !#inclib / !#libinc and semantic evaluation of library contents are still being developed; embedding a library does not yet mean its declarations are executable.
+
+## Current implementation status
+
+The current executable is still an early front end:
+- Location-aware lexer for identifiers, literals, operators, punctuation, comments, and directives.
+- Structural parser for blocks, declarations, functions, conditionals, loops, output, and give.
+- Syntax-check and token-inspection CLI.
+- Makefile and CMake builds with automatic .hlypp discovery and embedding.
+
+Not implemented yet: runtime evaluation, full expression/type semantics, callable user functions, REPL, external library loading, execution of embedded libraries, memory operations, complete Y_ built-ins, native code generation, and C++ ABI bindings. These are tracked in docs/ROADMAP.md. YPP should not be described as feature-equivalent to Y_ until those runtime milestones are completed.
 
 ## Starter syntax
 
-```ycpp
+~~~ycpp
 !#include <string>
 !#inclib %std/core.hlypp%
 
@@ -60,6 +69,6 @@ define main() {
         writescrn >^ "Keep learning!";
     }
 }
-```
+~~~
 
-The examples define the initial direction of the language. See [docs/GRAMMAR.md](docs/GRAMMAR.md) for the currently implemented structural grammar and known limitations.
+See the starter grammar in docs/GRAMMAR.md for the syntax currently recognized by the parser.
