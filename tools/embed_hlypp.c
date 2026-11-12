@@ -92,11 +92,11 @@ int main(int argc, char **argv) {
         fputc('\n', output);
     }
     if (okay) {
-        fprintf(output, "size_t y_embedded_library_count(void) { return %d; }\\n", argc - 2);
-        fputs("const char *y_embedded_library_name(size_t index) {\\n    switch (index) {\\n", output);
+        fprintf(output, "size_t y_embedded_library_count(void) { return %d; }\n", argc - 2);
+        fputs("const char *y_embedded_library_name(size_t index) {\n    switch (index) {\n", output);
         for (int i = 2; i < argc; ++i)
-            fprintf(output, "    case %d: return \\"%s\\";\\n", i - 2, names[i - 2]);
-        fputs("    default: return NULL;\\n    }\\n}\\n", output);
+            fprintf(output, "    case %d: return \"%s\";\n", i - 2, names[i - 2]);
+        fputs("    default: return NULL;\n    }\n}\n", output);
         fputs("const char *y_embedded_library(const char *name) {\\n", output);
         for (int i = 2; i < argc; ++i)
             fprintf(output, "    if (strcmp(name, \"%s\") == 0) return y_library_%d;\n", names[i - 2], i - 2);

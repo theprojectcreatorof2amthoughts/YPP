@@ -1049,7 +1049,7 @@ static Result execute(Stmt *stmt, Env *env) {
             Value path = evaluate(stmt->as.expression, env);
             if (path.kind != V_STRING) { report_error(stmt->line, "!#adeq expects a quoted .yaq path"); break; }
             size_t path_length = strlen(path.as.string);
-            if (path_length <= 6 || strcmp(path.as.string + path_length - 6, ".yaq") != 0) {
+            if (path_length <= 4 || strcmp(path.as.string + path_length - 4, ".yaq") != 0) {
                 report_error(stmt->line, "Adequit imports must name a .yaq file");
                 break;
             }
@@ -1135,10 +1135,10 @@ int ypp_runtime_check_file(const char *path) {
 int ypp_runtime_main(int argc, char **argv) {
     Env *globals = new_env(NULL);
     if (argc == 2 && strcmp(argv[1], "--version") == 0) {
-        printf("Y_ %s\n", YPP_VERSION);
+        printf("YPP %s\n", YPP_VERSION);
         return 0;
     }
-    if (argc > 2) { fprintf(stderr, "usage: %s [--version | script.yc]\n", argv[0]); return 2; }
+    if (argc > 2) { fprintf(stderr, "usage: %s [--version | script.ycpp]\n", argv[0]); return 2; }
     if (argc == 2) {
         char *source = read_entire_file(argv[1], NULL);
         if (!source) return 1;
@@ -1146,8 +1146,8 @@ int ypp_runtime_main(int argc, char **argv) {
         return failed ? 1 : 0;
     }
     char line[4096];
-    fputs("Y_ interactive mode (Ctrl-D to exit)\n", stdout);
-    while (fputs("y_> ", stdout), fflush(stdout), fgets(line, sizeof(line), stdin)) {
+    fputs("YPP interactive mode (Ctrl-D to exit)\n", stdout);
+    while (fputs("ypp> ", stdout), fflush(stdout), fgets(line, sizeof(line), stdin)) {
         failed = false;
         if (!run_source(line, "<repl>", globals)) failed = false;
     }
