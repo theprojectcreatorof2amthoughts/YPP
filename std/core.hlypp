@@ -1,0 +1,8 @@
+// YPP core header library (starter).
+// This file documents core declarations available to .ycpp translation units.
+// Built-in declarations are currently recognized by the front-end; runtime
+// implementations will be added in the next implementation milestone.
+
+define ypp_version() {
+    give "0.1.0";
+}
