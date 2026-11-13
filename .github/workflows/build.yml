@@ -1,4 +1,4 @@
-name: YPP build and runtime tests
+name: YLANG++ build and runtime tests
 on:
   push:
     branches: [main, "feature/**"]
@@ -13,7 +13,7 @@ jobs:
         run: make -j2
       - name: Runtime integration test
         run: |
-          ./ypp tests/runtime.ycpp | tee runtime-output.txt
+          ./ylang++ tests/runtime.ycpp | tee runtime-output.txt
           grep -q "runtime-ok" runtime-output.txt
           grep -q "120" runtime-output.txt
           grep -q "36" runtime-output.txt
@@ -31,4 +31,4 @@ jobs:
       - name: Build
         run: cmake --build build-cmake --parallel 2
       - name: Runtime smoke test
-        run: ./build-cmake/ypp examples/hello.ycpp
+        run: ./build-cmake/ylang++ examples/hello.ycpp

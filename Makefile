@@ -12,10 +12,10 @@ EMBEDDER := $(BUILD_DIR)/embed_hlypp
 EMBEDDED_SOURCE := $(BUILD_DIR)/embedded_libraries.c
 C_OBJECTS := $(BUILD_DIR)/runtime.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/file_io.o $(BUILD_DIR)/embedded_libraries.o
 CPP_OBJECTS := $(BUILD_DIR)/main.o $(BUILD_DIR)/lexer.o $(BUILD_DIR)/parser.o
-all: ypp
+all: ylang++
 help:
-	@echo "YPP build targets:"
-	@echo "  make              Build the YPP executable"
+	@echo "YLANG++ build targets:"
+	@echo "  make              Build the YLANG++ executable"
 	@echo "  make libraries    Generate the embedded .hlypp library table"
 	@echo "  make clean        Remove generated files and executable"
 $(BUILD_DIR):
@@ -41,7 +41,7 @@ $(BUILD_DIR)/lexer.o: src/lexer.cpp include/ypp/lexer.hpp include/ypp/token.hpp 
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 $(BUILD_DIR)/parser.o: src/parser.cpp include/ypp/parser.hpp include/ypp/ast.hpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
-ypp: $(C_OBJECTS) $(CPP_OBJECTS)
+ylang++: $(C_OBJECTS) $(CPP_OBJECTS)
 	$(CXX) -o $@ $(C_OBJECTS) $(CPP_OBJECTS) -lm $(LDFLAGS)
 clean:
-	rm -rf $(BUILD_DIR) ypp
+	rm -rf $(BUILD_DIR) ylang++ ypp
