@@ -197,13 +197,15 @@ static void tokenize(Parser *parser, const char *source) {
                 if (*cursor != '}') {
                     free(name);
                     report_error(line, "expected '}' to close custom variable name");
-                    break;
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue;
                 }
                 ++cursor;
                 if (length == 0) {
                     free(name);
                     report_error(line, "custom variable name cannot be empty");
-                    break;
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue;
                 }
                 name[length] = '\0';
                 token.kind = T_CUSTOM;
@@ -230,7 +232,8 @@ static void tokenize(Parser *parser, const char *source) {
                 while (*cursor == ' ' || *cursor == '\t') ++cursor;
                 if (*cursor != '(') {
                     report_error(line, "expected '(' after !#inptype");
-                    break;
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue;
                 }
                 token.kind = T_NAME;
                 token.text = copy_range("input", 5);
@@ -262,7 +265,8 @@ static void tokenize(Parser *parser, const char *source) {
             }
             if (directive_length != 6 || strncmp(start, "inclib", 6) != 0) {
                 report_error(line, "unknown directive; expected !#libinc, !#adeq, or !#inclib");
-                break;
+                while (*cursor && *cursor != '\n') ++cursor;
+                continue;
             }
             while (*cursor == ' ' || *cursor == '\t') ++cursor;
             if (*cursor != '%') { report_error(line, "expected '%' before embedded .hlypp library path");
@@ -273,7 +277,8 @@ static void tokenize(Parser *parser, const char *source) {
             while (*cursor && *cursor != '%' && *cursor != '\n') ++cursor;
             if (*cursor != '%' || cursor == path_start) {
                 report_error(line, "expected a non-empty .hlypp path between '%' markers");
-                break;
+                while (*cursor && *cursor != '\n') ++cursor;
+                continue;
             }
             token.kind = T_EMBEDDED_LIBRARY;
             token.text = copy_range(path_start, (size_t)(cursor - path_start));
