@@ -22,6 +22,10 @@ jobs:
           ./ylang++ --show-lib std/math.hlypp
       - name: Input directive test
         run: printf 'input-ok\n' | ./ylang++ examples/input.ycpp | grep -q 'input-ok'
+      - name: Native compiler smoke test
+        run: |
+          ./gy++ examples/hello.ycpp -o build/hello-native
+          ./build/hello-native
   cmake-build:
     runs-on: ubuntu-latest
     steps:
