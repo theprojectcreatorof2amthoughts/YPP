@@ -41,6 +41,7 @@ target_compile_definitions(gypp PRIVATE
     GYPP_PROJECT_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
     GYPP_EMBEDDED_SOURCE="${EMBEDDED_SOURCE}")
 target_compile_options(gypp PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(gypp PRIVATE ypp_runtime)
 add_executable(ylangpp src/main.cpp)
 set_target_properties(ylangpp PROPERTIES OUTPUT_NAME "ylang++")
 target_include_directories(ylangpp PRIVATE include src)
