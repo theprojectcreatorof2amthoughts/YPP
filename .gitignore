@@ -1,5 +1,8 @@
 /build/
 /ypp
+/ylang++
+/gy++
+/*.gypp.c
 *.o
 *.obj
 *.exe
