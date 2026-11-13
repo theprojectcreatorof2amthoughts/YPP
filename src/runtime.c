@@ -456,27 +456,30 @@ static Stmt *parse_block(Parser *p, bool stop_at_else) {
         if (match_keyword(p, "stash")) {
             if (!match(p, T_NAME) && !match(p, T_CUSTOM)) {
                 report_error(peek(p)->line, "expected a variable name after stash");
-                break;
+            } else {
+                Token name = *previous(p);
+                stmt = new_stmt(S_LOCAL, start.line); stmt->as.variable.name = name.text;
+                if (match(p, T_ASSIGN)) stmt->as.variable.value = parse_expression(p, 1);
             }
-            Token name = *previous(p);
-            stmt = new_stmt(S_LOCAL, start.line); stmt->as.variable.name = name.text;
-            if (match(p, T_ASSIGN)) stmt->as.variable.value = parse_expression(p, 1);
         } else if (match_keyword(p, "define")) {
             Token name = *peek(p);
-            if (!expect(p, T_NAME, "expected a procedure name")) break;
-            stmt = new_stmt(S_FUNCTION, start.line); stmt->as.function.name = name.text;
-            expect(p, T_LPAREN, "expected '(' after procedure name");
-            if (!match(p, T_RPAREN)) {
-                do {
-                    Token param = *peek(p);
-                    if (!expect(p, T_NAME, "expected a parameter name")) break;
-                    stmt->as.function.params = realloc(stmt->as.function.params, (stmt->as.function.count + 1) * sizeof(char *));
-                    stmt->as.function.params[stmt->as.function.count++] = param.text;
-                } while (match(p, T_COMMA));
-                expect(p, T_RPAREN, "expected ')' after parameters");
+            if (!expect(p, T_NAME, "expected a procedure name")) {
+                stmt = NULL;
+            } else {
+                stmt = new_stmt(S_FUNCTION, start.line); stmt->as.function.name = name.text;
+                expect(p, T_LPAREN, "expected '(' after procedure name");
+                if (!match(p, T_RPAREN)) {
+                    do {
+                        Token param = *peek(p);
+                        if (!expect(p, T_NAME, "expected a parameter name")) break;
+                        stmt->as.function.params = realloc(stmt->as.function.params, (stmt->as.function.count + 1) * sizeof(char *));
+                        stmt->as.function.params[stmt->as.function.count++] = param.text;
+                    } while (match(p, T_COMMA));
+                    expect(p, T_RPAREN, "expected ')' after parameters");
+                }
+                stmt->as.function.body = parse_block(p, false);
+                expect_keyword(p, "done");
             }
-            stmt->as.function.body = parse_block(p, false);
-            expect_keyword(p, "done");
         } else if (match_keyword(p, "when")) {
             stmt = new_stmt(S_IF, start.line);
             stmt->as.conditional.condition = parse_expression(p, 1);
@@ -546,7 +549,12 @@ static Stmt *parse_block(Parser *p, bool stop_at_else) {
             continue;
         }
         match(p, T_SEMI);
-        if (p->at == before) { report_error(peek(p)->line, "parser made no progress"); break; }
+        if (p->at == before) {
+            report_error(peek(p)->line, "parser made no progress");
+            failed = false;
+            if (peek(p)->kind != T_EOF && !keyword(p, "done") &&
+                !(stop_at_else && keyword(p, "else"))) ++p->at;
+        }
     }
     return head;
 }
