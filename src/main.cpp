@@ -25,18 +25,18 @@ std::string library_key(const char *argument) {
 }
 namespace {
 void usage() {
-    std::cout << "YPP 0.2.0 - Y++ hybrid C/C++ language runtime\n"
-                 "Usage:\n  ypp [script.ycpp]             Run a program (no file starts the REPL)\n"
-                 "  ypp --check <file.ycpp>       Parse without executing\n"
-                 "  ypp --tokens <file.ycpp>      Display lexical tokens\n"
-                 "  ypp --list-libs               List embedded .hlypp libraries\n"
-                 "  ypp --show-lib <path.hlypp>   Display an embedded library\n"
-                 "  ypp --version                 Show version\n";
+    std::cout << "YLANG++ 0.2.0 - Y++ hybrid C/C++ language runtime\n"
+                 "Usage:\n  ylang++ [script.ycpp]             Run a program (no file starts the REPL)\n"
+                 "  ylang++ --check <file.ycpp>       Parse without executing\n"
+                 "  ylang++ --tokens <file.ycpp>      Display lexical tokens\n"
+                 "  ylang++ --list-libs               List embedded .hlypp libraries\n"
+                 "  ylang++ --show-lib <path.hlypp>   Display an embedded library\n"
+                 "  ylang++ --version                 Show version\n";
 }
 }
 int main(int argc, char **argv) {
     ypp_register_native("cpp_add", cpp_add);
-    if (argc == 2 && std::string(argv[1]) == "--version") { std::cout << "YPP 0.2.0\n"; return 0; }
+    if (argc == 2 && std::string(argv[1]) == "--version") { std::cout << "YLANG++ 0.2.0\n"; return 0; }
     if (argc == 2 && std::string(argv[1]) == "--list-libs") {
         for (size_t i = 0; i < y_embedded_library_count(); ++i) std::cout << y_embedded_library_name(i) << '\n';
         return 0;
@@ -44,17 +44,17 @@ int main(int argc, char **argv) {
     if (argc == 3 && std::string(argv[1]) == "--show-lib") {
         const auto key = library_key(argv[2]);
         const auto *source = y_embedded_library(key.c_str());
-        if (!source) { std::cerr << "YPP: embedded library not found: " << key << '\n'; return 1; }
+        if (!source) { std::cerr << "YLANG++: embedded library not found: " << key << '\n'; return 1; }
         std::cout << source; return 0;
     }
     if (argc == 3 && std::string(argv[1]) == "--check") return ypp_runtime_check_file(argv[2]);
     if (argc == 3 && std::string(argv[1]) == "--tokens") {
         const std::string path = argv[2];
         if (path.size() <= 5 || path.substr(path.size() - 5) != ".ycpp") {
-            std::cerr << "YPP: source files must use .ycpp\n"; return 2;
+            std::cerr << "YLANG++: source files must use .ycpp\n"; return 2;
         }
         std::ifstream input(path, std::ios::binary);
-        if (!input) { std::cerr << "YPP: cannot open " << path << '\n'; return 2; }
+        if (!input) { std::cerr << "YLANG++: cannot open " << path << '\n'; return 2; }
         const std::string source((std::istreambuf_iterator<char>(input)), {});
         ypp::Lexer lexer(source);
         for (const auto &token : lexer.scan())
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         const std::string path = argv[1];
         if (path.size() <= 5 || path.substr(path.size() - 5) != ".ycpp") {
-            std::cerr << "YPP: source files must use the .ycpp extension\n"; return 2;
+            std::cerr << "YLANG++: source files must use the .ycpp extension\n"; return 2;
         }
     }
     return ypp_runtime_main(argc, argv);
