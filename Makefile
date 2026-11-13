@@ -12,11 +12,11 @@ EMBEDDER := $(BUILD_DIR)/embed_hlypp
 EMBEDDED_SOURCE := $(BUILD_DIR)/embedded_libraries.c
 C_OBJECTS := $(BUILD_DIR)/runtime.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/file_io.o $(BUILD_DIR)/embedded_libraries.o
 CPP_OBJECTS := $(BUILD_DIR)/main.o $(BUILD_DIR)/lexer.o $(BUILD_DIR)/parser.o
-all: ylang++
+all: ylang++ gy++
 help:
 	@echo "YLANG++ build targets:"
-	@echo "  make              Build the YLANG++ executable"
-	@echo "  make libraries    Generate the embedded .hlypp library table"
+	@echo "  make              Build YLANG++ and the gy++ native compiler"
+	@echo "  make gy++         Build the YPP native compiler driver"\n	@echo "  make libraries    Generate the embedded .hlypp library table"
 	@echo "  make clean        Remove generated files and executable"
 $(BUILD_DIR):
 	mkdir -p $@
@@ -44,4 +44,9 @@ $(BUILD_DIR)/parser.o: src/parser.cpp include/ypp/parser.hpp include/ypp/ast.hpp
 ylang++: $(C_OBJECTS) $(CPP_OBJECTS)
 	$(CXX) -o $@ $(C_OBJECTS) $(CPP_OBJECTS) -lm $(LDFLAGS)
 clean:
-	rm -rf $(BUILD_DIR) ylang++ ypp
+	rm -rf $(BUILD_DIR) ylang++ gy++ ypp
+
+# YPP native compiler: embeds .ycpp source and links it with the YPP runtime.
+GYPP_ROOT := $(CURDIR)
+gy++: tools/gypp.c $(EMBEDDED_SOURCE) src/runtime.c src/memory.c src/file_io.c src/runtime.h include/ypp/bridge.h
+	$(CC) $(CFLAGS) -DGYPP_PROJECT_ROOT='"$(GYPP_ROOT)"' -DGYPP_EMBEDDED_SOURCE='"$(CURDIR)/$(EMBEDDED_SOURCE)"' -o '$@' tools/gypp.c

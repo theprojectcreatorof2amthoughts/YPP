@@ -19,18 +19,27 @@ Requires a C11 compiler, a C++20 compiler, GNU Make or CMake 3.20+.
 ~~~sh
 make
 ./ylang++ examples/hello.ycpp
-./ypp tests/runtime.ycpp
-./ypp --check examples/hello.ycpp
-./ypp --list-libs
-./ypp --show-lib std/math.hlypp
+./ylang++ tests/runtime.ycpp
+./ylang++ --check examples/hello.ycpp
+./ylang++ --list-libs
+./ylang++ --show-lib std/math.hlypp
 ~~~
+
+Build the native compiler as a separate executable with `make` (or the CMake target):
+
+~~~sh
+gy++ examples/hello.ycpp -o hello-native
+./hello-native
+~~~
+
+The `gy++` driver uses `clang++` by default (override with `LLVM_CLANGXX` or `--clang++ PATH`). It embeds the selected .ycpp entry source in a native executable and links the YPP C runtime and embedded .hlypp libraries. External imports still resolve from their runtime paths.
 
 CMake:
 
 ~~~sh
 cmake -S . -B build-cmake
 cmake --build build-cmake --config Release
-./build-cmake/ypp examples/hello.ycpp
+./build-cmake/ylang++ examples/hello.ycpp
 ~~~
 
 Use make clean to remove Make-generated artifacts. Both build systems discover .hlypp files under std/ and embed their contents into the executable.
@@ -80,7 +89,7 @@ int main(int argc, char **argv) {
 
 Registered host functions are callable from YPP source like ordinary functions. Supported bridge values are void, number, string, and boolean. String results are copied by the runtime before the callback returns. The bundled CLI registers cpp_add as a working example.
 
-This is a host-function ABI bridge, not a general C++ header parser or automatic binding generator. Native code generation and C++ class/object marshalling are future work.
+This is a host-function ABI bridge, not a general C++ header parser or automatic binding generator. `gy++` creates a native executable by embedding the selected YPP source and linking the YPP runtime; it does not translate each YPP statement into standalone machine code. General C++ class/object marshalling remains future work.
 
 ## Library behavior
 
@@ -92,4 +101,4 @@ This is a host-function ABI bridge, not a general C++ header parser or automatic
 - tests/runtime.ycpp exercises runtime evaluation, recursion, loops, strings, memory, imports, and the C++ host bridge.
 - .github/workflows/build.yml builds with both Make and CMake and runs smoke tests.
 
-YPP is experimental. It does not claim C++ language compatibility, static type checking, a C++ parser, or native compilation of YPP programs.
+YPP is experimental. It does not claim C++ language compatibility, static type checking, a C++ parser, or direct YPP-to-machine-code translation.

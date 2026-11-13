@@ -1108,6 +1108,13 @@ static bool run_source(const char *source, const char *path, Env *env) {
     return !failed;
 }
 
+int ypp_runtime_run_source(const char *source, const char *path) {
+    failed = false;
+    if (!source) { report_error(1, "missing embedded source"); return 2; }
+    Env *globals = new_env(NULL);
+    (void)run_source(source, path ? path : "<embedded>", globals);
+    return failed ? 1 : 0;
+}
 
 int ypp_runtime_check_file(const char *path) {
     failed = false;
