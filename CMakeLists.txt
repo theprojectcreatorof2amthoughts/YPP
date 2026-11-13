@@ -34,6 +34,7 @@ target_include_directories(ypp_frontend PUBLIC include)
 target_compile_features(ypp_frontend PUBLIC cxx_std_20)
 add_custom_target(ypp_runtime_assets DEPENDS "${EMBEDDED_SOURCE}")
 add_executable(gypp tools/gypp.c)
+target_include_directories(gypp PRIVATE src include)
 set_target_properties(gypp PROPERTIES OUTPUT_NAME "gy++")
 add_dependencies(gypp ypp_runtime_assets)
 target_compile_definitions(gypp PRIVATE
