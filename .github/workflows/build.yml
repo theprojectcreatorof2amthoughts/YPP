@@ -17,7 +17,7 @@ jobs:
           grep -q "runtime-ok" runtime-output.txt
           grep -q "120" runtime-output.txt
           grep -q "36" runtime-output.txt
-          ./ypp --check tests/runtime.ycpp
+          ./ylang++ --check tests/runtime.ycpp
           ./ypp --list-libs
           ./ypp --show-lib std/math.hlypp
       - name: Input directive test
