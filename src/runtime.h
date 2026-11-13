@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 int ypp_runtime_main(int argc, char **argv);
+int ypp_runtime_run_source(const char *source, const char *path);
 int ypp_runtime_check_file(const char *path);
 #ifdef __cplusplus
 }
