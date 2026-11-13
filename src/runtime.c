@@ -71,13 +71,14 @@ struct Stmt {
 static bool failed;
 static unsigned diagnostic_count;
 static int last_error_line;
+static bool collecting_tokens;
 static const char *active_path = "<input>";
 
 static void report_error(int line, const char *message) {
     fprintf(stderr, "%s:%d: error: %s\n", active_path, line, message);
     ++diagnostic_count;
     last_error_line = line;
-    failed = true;
+    if (!collecting_tokens) failed = true;
 }
 
 static char *copy_range(const char *start, size_t length) {
@@ -171,7 +172,9 @@ static bool is_name_char(char c) { return isalnum((unsigned char)c) || c == '_';
 static void tokenize(Parser *parser, const char *source) {
     const char *cursor = source;
     int line = 1;
-    while (*cursor && !failed) {
+    unsigned diagnostics_before = diagnostic_count;
+    collecting_tokens = true;
+    while (*cursor) {
         if (*cursor == '\n') { ++line; ++cursor; continue; }
         if (isspace((unsigned char)*cursor)) { ++cursor; continue; }
         if (cursor[0] == '#' && cursor[1] == '#') {
@@ -209,7 +212,9 @@ static void tokenize(Parser *parser, const char *source) {
                 continue;
             }
             const char *start = cursor;
-            if (!is_name_start(*cursor)) { report_error(line, "expected a name after !$ or a braced name after !${"); break; }
+            if (!is_name_start(*cursor)) { report_error(line, "expected a name after !$ or a braced name after !${");
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue; }
             while (is_name_char(*cursor)) ++cursor;
             token.kind = T_CUSTOM;
             token.text = copy_range(start, (size_t)(cursor - start));
@@ -240,11 +245,15 @@ static void tokenize(Parser *parser, const char *source) {
             }
             if (directive_length == 4 && strncmp(start, "adeq", 4) == 0) {
                 while (*cursor == ' ' || *cursor == '\t') ++cursor;
-                if (*cursor != '"') { report_error(line, "expected a quoted .yaq path after !#adeq"); break; }
+                if (*cursor != '"') { report_error(line, "expected a quoted .yaq path after !#adeq");
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue; }
                 ++cursor;
                 const char *path_start = cursor;
                 while (*cursor && *cursor != '"' && *cursor != '\n') ++cursor;
-                if (*cursor != '"' || cursor == path_start) { report_error(line, "expected a non-empty .yaq path"); break; }
+                if (*cursor != '"' || cursor == path_start) { report_error(line, "expected a non-empty .yaq path");
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue; }
                 token.kind = T_ADEQUIT;
                 token.text = copy_range(path_start, (size_t)(cursor - path_start));
                 ++cursor;
@@ -256,7 +265,9 @@ static void tokenize(Parser *parser, const char *source) {
                 break;
             }
             while (*cursor == ' ' || *cursor == '\t') ++cursor;
-            if (*cursor != '%') { report_error(line, "expected '%' before embedded .hlypp library path"); break; }
+            if (*cursor != '%') { report_error(line, "expected '%' before embedded .hlypp library path");
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue; }
             ++cursor;
             const char *path_start = cursor;
             while (*cursor && *cursor != '%' && *cursor != '\n') ++cursor;
@@ -280,7 +291,9 @@ static void tokenize(Parser *parser, const char *source) {
             char *end = NULL;
             errno = 0;
             token.number = strtod(cursor, &end);
-            if (errno == ERANGE || end == cursor) { report_error(line, "invalid number"); break; }
+            if (errno == ERANGE || end == cursor) { report_error(line, "invalid number");
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue; }
             token.kind = T_NUMBER; token.text = copy_range(cursor, (size_t)(end - cursor));
             cursor = end; add_token(parser, token); continue;
         }
@@ -298,7 +311,9 @@ static void tokenize(Parser *parser, const char *source) {
                 if (length + 1 >= capacity) { capacity *= 2; value = realloc(value, capacity); }
                 value[length++] = ch;
             }
-            if (*cursor != quote) { free(value); report_error(line, "unterminated string"); break; }
+            if (*cursor != quote) { free(value); report_error(line, "unterminated string");
+                    while (*cursor && *cursor != '\n') ++cursor;
+                    continue; }
             ++cursor; value[length] = '\0'; token.kind = T_STRING; token.text = value;
             add_token(parser, token); continue;
         }
@@ -327,7 +342,9 @@ static void tokenize(Parser *parser, const char *source) {
         }
         add_token(parser, token);
     }
+    collecting_tokens = false;
     add_token(parser, (Token){ .kind = T_EOF, .line = line });
+    if (diagnostic_count != diagnostics_before) failed = true;
 }
 
 static Token *peek(Parser *p) { return &p->items[p->at]; }
