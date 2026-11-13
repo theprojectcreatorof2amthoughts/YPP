@@ -59,7 +59,7 @@ static int write_c_string(FILE*f,const char*s) {
 static int wrapper_file(const char*path,const char*source,const char*source_path) {
     FILE*f=fopen(path,"wb");
     if(!f){fprintf(stderr,"gy++: error: cannot create %s: %s\n",path,strerror(errno));return 0;}
-    int ok=fputs("#include \"runtime.h\"\n"
+    int ok=fputs("#include \"runtime.h\"\n#include <stdio.h>\n"
                  "static const char gypp_source[] = ",f)>=0
         &&write_c_string(f,source)
         &&fputs(";\nstatic const char gypp_path[] = ",f)>=0
