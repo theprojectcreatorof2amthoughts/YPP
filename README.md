@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
 Registered host functions are callable from YPP source like ordinary functions. Supported bridge values are void, number, string, and boolean. String results are copied by the runtime before the callback returns. The bundled CLI registers cpp_add as a working example.
 
-This is a host-function ABI bridge, not a general C++ header parser or automatic binding generator. Native code generation and C++ class/object marshalling are future work.
+This is a host-function ABI bridge, not a general C++ header parser or automatic binding generator. `gy++` creates a native executable by embedding the selected YPP source and linking the YPP runtime; it does not translate each YPP statement into standalone machine code. General C++ class/object marshalling remains future work.
 
 ## Library behavior
 
@@ -101,4 +101,4 @@ This is a host-function ABI bridge, not a general C++ header parser or automatic
 - tests/runtime.ycpp exercises runtime evaluation, recursion, loops, strings, memory, imports, and the C++ host bridge.
 - .github/workflows/build.yml builds with both Make and CMake and runs smoke tests.
 
-YPP is experimental. It does not claim C++ language compatibility, static type checking, a C++ parser, or native compilation of YPP programs.
+YPP is experimental. It does not claim C++ language compatibility, static type checking, a C++ parser, or direct YPP-to-machine-code translation.
