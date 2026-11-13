@@ -1116,6 +1116,77 @@ int ypp_runtime_run_source(const char *source, const char *path) {
     return failed ? 1 : 0;
 }
 
+static bool check_source_recursive(const char *source, const char *path, unsigned depth);
+
+static bool check_statement_imports(Stmt *stmt, unsigned depth) {
+    for (; stmt && !failed; stmt = stmt->next) {
+        if (stmt->kind == S_INCLUDE) {
+            Expr *path_expr = stmt->as.expression;
+            if (!path_expr || path_expr->kind != E_VALUE || path_expr->as.value.kind != V_STRING) {
+                report_error(stmt->line, "!#libinc expects a quoted .hlypp path");
+                return false;
+            }
+            const char *path = path_expr->as.value.as.string;
+            size_t length = strlen(path);
+            if (length <= 6 || strcmp(path + length - 6, ".hlypp") != 0) {
+                report_error(stmt->line, "!#libinc imports must name a .hlypp Header Library Y file");
+                return false;
+            }
+            char *library_source = read_entire_file(path, NULL);
+            if (!library_source) { failed = true; return false; }
+            bool okay = check_source_recursive(library_source, path, depth + 1);
+            free(library_source);
+            if (!okay) return false;
+        } else if (stmt->kind == S_EMBEDDED_INCLUDE) {
+            const char *path = stmt->as.embedded_library;
+            const char *filename = strrchr(path, '/');
+            filename = filename ? filename + 1 : path;
+            size_t length = strlen(filename);
+            if (length <= 6 || strcmp(filename + length - 6, ".hlypp") != 0) {
+                report_error(stmt->line, "embedded imports must name a .hlypp file");
+                return false;
+            }
+            char *library_name = copy_range(filename, length - 6);
+            const char *library_source = y_embedded_library(library_name);
+            if (!library_source) {
+                char message[256];
+                snprintf(message, sizeof(message), "unknown embedded library '%%%s%%'", path);
+                report_error(stmt->line, message);
+                free(library_name);
+                return false;
+            }
+            bool okay = check_source_recursive(library_source, library_name, depth + 1);
+            free(library_name);
+            if (!okay) return false;
+        }
+        if (stmt->kind == S_FUNCTION &&
+            !check_statement_imports(stmt->as.function.body, depth)) return false;
+        if (stmt->kind == S_IF &&
+            (!check_statement_imports(stmt->as.conditional.yes, depth) ||
+             !check_statement_imports(stmt->as.conditional.no, depth))) return false;
+        if (stmt->kind == S_WHILE &&
+            !check_statement_imports(stmt->as.loop.body, depth)) return false;
+    }
+    return !failed;
+}
+
+static bool check_source_recursive(const char *source, const char *path, unsigned depth) {
+    if (depth >= 64) {
+        report_error(1, "source import depth limit exceeded");
+        return false;
+    }
+    const char *old_path = active_path;
+    active_path = path ? path : "<input>";
+    Parser parser = { .path = active_path };
+    tokenize(&parser, source);
+    Stmt *program = failed ? NULL : parse_block(&parser, false);
+    if (!failed && peek(&parser)->kind != T_EOF)
+        report_error(peek(&parser)->line, "unexpected trailing input");
+    bool okay = !failed && check_statement_imports(program, depth);
+    active_path = old_path;
+    return okay;
+}
+
 int ypp_runtime_check_file(const char *path) {
     failed = false;
     active_path = path ? path : "<input>";
@@ -1127,16 +1198,9 @@ int ypp_runtime_check_file(const char *path) {
     }
     char *source = read_entire_file(path, NULL);
     if (!source) return 1;
-    Parser parser = { .path = path };
-    tokenize(&parser, source);
-    Stmt *program = failed ? NULL : parse_block(&parser, false);
-    if (!failed && peek(&parser)->kind != T_EOF)
-        report_error(peek(&parser)->line, "unexpected trailing input");
+    bool okay = check_source_recursive(source, path, 0);
     free(source);
-    if (failed) return 1;
-    (void)program;
-    puts("YPP: syntax check passed");
-    return 0;
+    return okay ? 0 : 1;
 }
 
 int ypp_runtime_main(int argc, char **argv) {
