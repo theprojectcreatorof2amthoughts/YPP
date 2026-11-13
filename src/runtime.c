@@ -69,10 +69,14 @@ struct Stmt {
 };
 
 static bool failed;
+static unsigned diagnostic_count;
+static int last_error_line;
 static const char *active_path = "<input>";
 
 static void report_error(int line, const char *message) {
-    if (!failed) fprintf(stderr, "%s:%d: %s\n", active_path, line, message);
+    fprintf(stderr, "%s:%d: error: %s\n", active_path, line, message);
+    ++diagnostic_count;
+    last_error_line = line;
     failed = true;
 }
 
@@ -444,7 +448,7 @@ static Expr *parse_expression(Parser *p, int minimum) {
 
 static Stmt *parse_block(Parser *p, bool stop_at_else) {
     Stmt *head = NULL, **tail = &head;
-    while (peek(p)->kind != T_EOF && !keyword(p, "done") && !(stop_at_else && keyword(p, "else")) && !failed) {
+    while (peek(p)->kind != T_EOF && !keyword(p, "done") && !(stop_at_else && keyword(p, "else"))) {
         if (match(p, T_SEMI)) continue;
         size_t before = p->at;
         Stmt *stmt = NULL;
@@ -528,9 +532,19 @@ static Stmt *parse_block(Parser *p, bool stop_at_else) {
                 stmt = new_stmt(S_EXPR, start.line); stmt->as.expression = parse_expression(p, 1);
             }
         } else {
-            report_error(peek(p)->line, "unexpected token at start of statement"); break;
+            report_error(peek(p)->line, "unexpected token at start of statement");
         }
         if (stmt) { *tail = stmt; tail = &stmt->next; }
+        if (failed) {
+            failed = false;
+            if (last_error_line <= start.line) {
+                while (peek(p)->kind != T_EOF && peek(p)->line <= start.line &&
+                       !keyword(p, "done") && !(stop_at_else && keyword(p, "else"))) ++p->at;
+            }
+            if (p->at == before && peek(p)->kind != T_EOF &&
+                !keyword(p, "done") && !(stop_at_else && keyword(p, "else"))) ++p->at;
+            continue;
+        }
         match(p, T_SEMI);
         if (p->at == before) { report_error(peek(p)->line, "parser made no progress"); break; }
     }
@@ -1092,6 +1106,7 @@ static Result execute_list(Stmt *stmt, Env *env) {
 
 static unsigned source_depth;
 static bool run_source(const char *source, const char *path, Env *env) {
+    unsigned diagnostics_before = diagnostic_count;
     if (source_depth >= 64) {
         report_error(1, "source import depth limit exceeded");
         return false;
@@ -1102,14 +1117,15 @@ static bool run_source(const char *source, const char *path, Env *env) {
     tokenize(&parser, source);
     Stmt *program = failed ? NULL : parse_block(&parser, false);
     if (!failed && peek(&parser)->kind != T_EOF) report_error(peek(&parser)->line, "unexpected trailing input");
-    if (!failed) execute_list(program, env);
+    if (!failed && diagnostic_count == diagnostics_before) execute_list(program, env);
     active_path = old_path;
     --source_depth;
-    return !failed;
+    return !failed && diagnostic_count == diagnostics_before;
 }
 
 int ypp_runtime_run_source(const char *source, const char *path) {
     failed = false;
+    diagnostic_count = 0;
     if (!source) { report_error(1, "missing embedded source"); return 2; }
     Env *globals = new_env(NULL);
     (void)run_source(source, path ? path : "<embedded>", globals);
@@ -1171,6 +1187,7 @@ static bool check_statement_imports(Stmt *stmt, unsigned depth) {
 }
 
 static bool check_source_recursive(const char *source, const char *path, unsigned depth) {
+    unsigned diagnostics_before = diagnostic_count;
     if (depth >= 64) {
         report_error(1, "source import depth limit exceeded");
         return false;
@@ -1182,13 +1199,14 @@ static bool check_source_recursive(const char *source, const char *path, unsigne
     Stmt *program = failed ? NULL : parse_block(&parser, false);
     if (!failed && peek(&parser)->kind != T_EOF)
         report_error(peek(&parser)->line, "unexpected trailing input");
-    bool okay = !failed && check_statement_imports(program, depth);
+    bool okay = !failed && diagnostic_count == diagnostics_before && check_statement_imports(program, depth);
     active_path = old_path;
-    return okay;
+    return okay && diagnostic_count == diagnostics_before;
 }
 
 int ypp_runtime_check_file(const char *path) {
     failed = false;
+    diagnostic_count = 0;
     active_path = path ? path : "<input>";
     if (!path) { report_error(1, "missing source path"); return 2; }
     size_t length = strlen(path);
@@ -1200,7 +1218,7 @@ int ypp_runtime_check_file(const char *path) {
     if (!source) return 1;
     bool okay = check_source_recursive(source, path, 0);
     free(source);
-    return okay ? 0 : 1;
+    return (okay && diagnostic_count == 0 && !failed) ? 0 : 1;
 }
 
 int ypp_runtime_main(int argc, char **argv) {
