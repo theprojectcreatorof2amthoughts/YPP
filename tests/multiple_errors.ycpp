@@ -1,0 +1,3 @@
+stash = 1
+writescrn >^ "This valid line should not stop diagnostic collection"
+stash = 2
