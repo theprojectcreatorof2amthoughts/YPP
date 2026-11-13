@@ -1,6 +1,6 @@
-# YPP (Y++)
+# YLANG++ (YPP / Y++)
 
-YPP is a hybrid C/C++ programming language project: it carries Y_'s interpreter/runtime model forward in C and provides a C++20 host, tooling, and native-function bridge. The language keeps Y_'s vocabulary rather than replacing it with C-like aliases.
+YLANG++ (formerly YPP) is a hybrid C/C++ programming language project: it carries Y_'s interpreter/runtime model forward in C and provides a C++20 host, tooling, and native-function bridge. The language keeps Y_'s vocabulary rather than replacing it with C-like aliases.
 
 ## File formats
 
@@ -18,7 +18,7 @@ Requires a C11 compiler, a C++20 compiler, GNU Make or CMake 3.20+.
 
 ~~~sh
 make
-./ypp examples/hello.ycpp
+./ylang++ examples/hello.ycpp
 ./ypp tests/runtime.ycpp
 ./ypp --check examples/hello.ycpp
 ./ypp --list-libs
@@ -47,7 +47,7 @@ The Y_ interpreter core has been ported into YPP's C runtime and linked into a C
 - Embedded !#inclib %path.hlypp%, external !#libinc "path.hlypp", and external !#adeq "path.yaq" imports.
 - Checked byte buffers using memdesig, memread, and memwrite (up to 16 MiB).
 - Y_'s math, geometry, numeric conversion, predicates, aggregation, and string built-ins.
-- A persistent interactive prompt when ypp is run without a source file.
+- A persistent interactive prompt when ylang++ is run without a source file.
 - Import-depth and loop-iteration limits.
 
 The original Y_ runtime's semantics and vocabulary are retained. YPP-specific file extensions are used for source and header libraries.
