@@ -32,7 +32,7 @@ gy++ examples/hello.ycpp -o hello-native
 ./hello-native
 ~~~
 
-The `gy++` driver uses `clang++` by default (override with `LLVM_CLANGXX` or `--clang++ PATH`). It embeds the selected .ycpp entry source in a native executable and links the YCPP C runtime and embedded .hlypp libraries. External imports still resolve from their runtime paths.
+The `gy++` driver uses `clang++` by default (override with `LLVM_CLANGXX` or `--clang++ PATH`). Before invoking Clang++, it syntax-checks the entry .ycpp file and recursively checks every imported external or embedded .hlypp library. A syntax error in a library therefore stops compilation and reports the library filename and line. It then embeds the selected .ycpp entry source in a native executable and links the YCPP C runtime and embedded .hlypp libraries. External imports still resolve from their runtime paths.
 
 CMake:
 
