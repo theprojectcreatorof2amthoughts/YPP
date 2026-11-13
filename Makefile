@@ -4,7 +4,7 @@ CFLAGS ?= -std=c11 -O2 -Wall -Wextra -Wpedantic
 CXXFLAGS ?= -std=c++20 -O2 -Wall -Wextra -Wpedantic
 CPPFLAGS ?= -Iinclude -Isrc
 LDFLAGS ?=
-.PHONY: all clean libraries help FORCE
+.PHONY: all clean libraries help test-diagnostics FORCE
 .DEFAULT_GOAL := all
 HLYPP_FILES := $(shell find std -type f -name '*.hlypp' -not -path '*/.git/*' -not -path '*/build/*' 2>/dev/null | LC_ALL=C sort)
 BUILD_DIR := build
@@ -50,3 +50,6 @@ clean:
 GYPP_ROOT := $(CURDIR)
 gy++: tools/gypp.c $(EMBEDDED_SOURCE) src/runtime.c src/memory.c src/file_io.c src/runtime.h include/ypp/bridge.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -DGYPP_PROJECT_ROOT='"$(GYPP_ROOT)"' -DGYPP_EMBEDDED_SOURCE='"$(CURDIR)/$(EMBEDDED_SOURCE)"' -o '$@' tools/gypp.c src/runtime.c src/memory.c src/file_io.c $(EMBEDDED_SOURCE) -lm
+
+test-diagnostics: gy++
+	@sh tests/test_multi_error.sh
