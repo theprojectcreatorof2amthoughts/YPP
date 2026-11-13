@@ -19,18 +19,27 @@ Requires a C11 compiler, a C++20 compiler, GNU Make or CMake 3.20+.
 ~~~sh
 make
 ./ylang++ examples/hello.ycpp
-./ypp tests/runtime.ycpp
-./ypp --check examples/hello.ycpp
-./ypp --list-libs
-./ypp --show-lib std/math.hlypp
+./ylang++ tests/runtime.ycpp
+./ylang++ --check examples/hello.ycpp
+./ylang++ --list-libs
+./ylang++ --show-lib std/math.hlypp
 ~~~
+
+Build the native compiler as a separate executable with `make` (or the CMake target):
+
+~~~sh
+gy++ examples/hello.ycpp -o hello-native
+./hello-native
+~~~
+
+The `gy++` driver uses `clang++` by default (override with `LLVM_CLANGXX` or `--clang++ PATH`). It embeds the selected .ycpp entry source in a native executable and links the YPP C runtime and embedded .hlypp libraries. External imports still resolve from their runtime paths.
 
 CMake:
 
 ~~~sh
 cmake -S . -B build-cmake
 cmake --build build-cmake --config Release
-./build-cmake/ypp examples/hello.ycpp
+./build-cmake/ylang++ examples/hello.ycpp
 ~~~
 
 Use make clean to remove Make-generated artifacts. Both build systems discover .hlypp files under std/ and embed their contents into the executable.
