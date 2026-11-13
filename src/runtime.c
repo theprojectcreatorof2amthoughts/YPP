@@ -562,7 +562,7 @@ static Stmt *parse_block(Parser *p, bool stop_at_else) {
         if (stmt) { *tail = stmt; tail = &stmt->next; }
         if (failed) {
             failed = false;
-            if (last_error_line <= start.line) {
+            if (last_error_line == start.line) {
                 while (peek(p)->kind != T_EOF && peek(p)->line <= start.line &&
                        !keyword(p, "done") && !(stop_at_else && keyword(p, "else"))) ++p->at;
             }
