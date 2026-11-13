@@ -19,9 +19,9 @@ jobs:
           grep -q "36" runtime-output.txt
           ./ylang++ --check tests/runtime.ycpp
           ./ylang++ --list-libs
-          ./ypp --show-lib std/math.hlypp
+          ./ylang++ --show-lib std/math.hlypp
       - name: Input directive test
-        run: printf 'input-ok\n' | ./ypp examples/input.ycpp | grep -q 'input-ok'
+        run: printf 'input-ok\n' | ./ylang++ examples/input.ycpp | grep -q 'input-ok'
   cmake-build:
     runs-on: ubuntu-latest
     steps:
