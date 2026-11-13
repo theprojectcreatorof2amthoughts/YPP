@@ -70,9 +70,27 @@ struct Stmt {
 
 static bool failed;
 static const char *active_path = "<input>";
+static const char *active_source;
 
 static void report_error(int line, const char *message) {
-    if (!failed) fprintf(stderr, "%s:%d: %s\n", active_path, line, message);
+    if (!failed) {
+        const char *source_line = active_source;
+        int current_line = 1;
+        while (source_line && *source_line && current_line < line) {
+            if (*source_line++ == '\n') ++current_line;
+        }
+        fprintf(stderr, "%s:%d:1: error: %s\n", active_path, line, message);
+        if (source_line && *source_line) {
+            const char *end = strchr(source_line, '\n');
+            size_t length = end ? (size_t)(end - source_line) : strlen(source_line);
+            if (length && source_line[length - 1] == '\r') --length;
+            int width = snprintf(NULL, 0, "%d", line);
+            fprintf(stderr, "%*s | ", width, "");
+            fwrite(source_line, 1, length, stderr);
+            fputc('\n', stderr);
+            fprintf(stderr, "%*s | ^\n", width, "");
+        }
+    }
     failed = true;
 }
 
@@ -1097,13 +1115,17 @@ static bool run_source(const char *source, const char *path, Env *env) {
         return false;
     }
     ++source_depth;
-    const char *old_path = active_path; active_path = path;
+    const char *old_path = active_path;
+    const char *old_source = active_source;
+    active_path = path;
+    active_source = source;
     Parser parser = { .path = path };
     tokenize(&parser, source);
     Stmt *program = failed ? NULL : parse_block(&parser, false);
     if (!failed && peek(&parser)->kind != T_EOF) report_error(peek(&parser)->line, "unexpected trailing input");
     if (!failed) execute_list(program, env);
     active_path = old_path;
+    active_source = old_source;
     --source_depth;
     return !failed;
 }
@@ -1155,7 +1177,7 @@ static bool check_statement_imports(Stmt *stmt, unsigned depth) {
                 free(library_name);
                 return false;
             }
-            bool okay = check_source_recursive(library_source, library_name, depth + 1);
+            bool okay = check_source_recursive(library_source, path, depth + 1);
             free(library_name);
             if (!okay) return false;
         }
@@ -1176,7 +1198,9 @@ static bool check_source_recursive(const char *source, const char *path, unsigne
         return false;
     }
     const char *old_path = active_path;
+    const char *old_source = active_source;
     active_path = path ? path : "<input>";
+    active_source = source;
     Parser parser = { .path = active_path };
     tokenize(&parser, source);
     Stmt *program = failed ? NULL : parse_block(&parser, false);
@@ -1184,6 +1208,7 @@ static bool check_source_recursive(const char *source, const char *path, unsigne
         report_error(peek(&parser)->line, "unexpected trailing input");
     bool okay = !failed && check_statement_imports(program, depth);
     active_path = old_path;
+    active_source = old_source;
     return okay;
 }
 
