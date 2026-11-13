@@ -20,8 +20,9 @@
 static void usage(FILE *f) {
     fputs("gy++ - YLANG++ native compiler (Clang++ toolchain)\n"
           "Usage: gy++ <program.ycpp> [-o output] [-O0|-O1|-O2|-O3] [-g]\n"
-          "Options: --clang++ PATH, -Wall, -Wextra, -Wpedantic, -Werror,\n"
-          "         -Wno-WARNING, -Werror=WARNING, --help, --version\n"
+          "Options: --clang++ PATH, --xx-warn-all, --xx-warn-extra, --xx-optimize=0..3,\n"
+          "         -Wall, -Wextra, -Wpedantic, -Werror, -Wno-WARNING,\n"
+          "         -Werror=WARNING, -g, --help, --version\n"
           "The source is embedded into a native executable linked with the YPP runtime.\n", f);
 }
 static char *dupstr(const char *s) {
@@ -101,6 +102,9 @@ int main(int argc,char**argv) {
         else if(!strcmp(argv[i],"--clang++")){if(++i>=argc){fputs("gy++: missing path after --clang++\n",stderr);return 2;}clang=argv[i];}
         else if(!strncmp(argv[i],"-O",2)){if(strcmp(argv[i],"-O0")&&strcmp(argv[i],"-O1")&&strcmp(argv[i],"-O2")&&strcmp(argv[i],"-O3")){fprintf(stderr,"gy++: invalid optimization '%s'\n",argv[i]);return 2;}opt=argv[i];}
         else if(!strcmp(argv[i],"-g"))debug=1;
+        else if(!strcmp(argv[i],"--xx-warn-all")){if(warning_count==MAX_FLAGS)return 2;warnings[warning_count++]="-Wall";}
+        else if(!strcmp(argv[i],"--xx-warn-extra")){if(warning_count==MAX_FLAGS)return 2;warnings[warning_count++]="-Wextra";}
+        else if(!strncmp(argv[i],"--xx-optimize=",14)){const char *level=argv[i]+14;if(strlen(level)!=1||level[0]<'0'||level[0]>'3'){fprintf(stderr,"gy++: invalid optimization '%s'\n",argv[i]);return 2;}static char xx_opt[4];snprintf(xx_opt,sizeof(xx_opt),"-O%c",level[0]);opt=xx_opt;}
         else if(!strcmp(argv[i],"-Wall")||!strcmp(argv[i],"-Wextra")||!strcmp(argv[i],"-Wpedantic")||!strcmp(argv[i],"-Werror")||!strncmp(argv[i],"-Wno-",5)||!strncmp(argv[i],"-Werror=",8)){if(warning_count==MAX_FLAGS)return 2;warnings[warning_count++]=argv[i];}
         else if(argv[i][0]=='-'){fprintf(stderr,"gy++: unknown option '%s'\n",argv[i]);return 2;}
         else if(input){fputs("gy++: only one .ycpp entry file is accepted\n",stderr);return 2;}
