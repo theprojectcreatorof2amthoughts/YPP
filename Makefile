@@ -49,4 +49,4 @@ clean:
 # YPP native compiler: embeds .ycpp source and links it with the YPP runtime.
 GYPP_ROOT := $(CURDIR)
 gy++: tools/gypp.c $(EMBEDDED_SOURCE) src/runtime.c src/memory.c src/file_io.c src/runtime.h include/ypp/bridge.h
-	$(CC) $(CFLAGS) -DGYPP_PROJECT_ROOT='"$(GYPP_ROOT)"' -DGYPP_EMBEDDED_SOURCE='"$(CURDIR)/$(EMBEDDED_SOURCE)"' -o '$@' tools/gypp.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -DGYPP_PROJECT_ROOT='"$(GYPP_ROOT)"' -DGYPP_EMBEDDED_SOURCE='"$(CURDIR)/$(EMBEDDED_SOURCE)"' -o '$@' tools/gypp.c src/runtime.c src/memory.c src/file_io.c $(EMBEDDED_SOURCE) -lm
