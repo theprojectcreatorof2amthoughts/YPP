@@ -1153,6 +1153,23 @@ static bool check_statement_imports(Stmt *stmt, unsigned depth) {
             bool okay = check_source_recursive(library_source, path, depth + 1);
             free(library_source);
             if (!okay) return false;
+        } else if (stmt->kind == S_ADEQUIT) {
+            Expr *path_expr = stmt->as.expression;
+            if (!path_expr || path_expr->kind != E_VALUE || path_expr->as.value.kind != V_STRING) {
+                report_error(stmt->line, "!#adeq expects a quoted .yaq path");
+                return false;
+            }
+            const char *path = path_expr->as.value.as.string;
+            size_t length = strlen(path);
+            if (length <= 4 || strcmp(path + length - 4, ".yaq") != 0) {
+                report_error(stmt->line, "Adequit imports must name a .yaq file");
+                return false;
+            }
+            char *tool_source = read_entire_file(path, NULL);
+            if (!tool_source) { failed = true; return false; }
+            bool okay = check_source_recursive(tool_source, path, depth + 1);
+            free(tool_source);
+            if (!okay) return false;
         } else if (stmt->kind == S_EMBEDDED_INCLUDE) {
             const char *path = stmt->as.embedded_library;
             const char *filename = strrchr(path, '/');
