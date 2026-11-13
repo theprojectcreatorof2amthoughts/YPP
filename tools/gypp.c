@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "runtime.h"
 #ifndef _WIN32
 #include <sys/wait.h>
 #include <unistd.h>
@@ -111,6 +112,7 @@ int main(int argc,char**argv) {
         else input=argv[i];
     }
     if(!input||!has_extension(input,".ycpp")){usage(stderr);return 2;}
+    if (ypp_runtime_check_file(input) != 0) return 1;
     char *source=read_source(input);if(!source)return 1;
     char *owned=NULL;if(!outarg){owned=default_output(input);outarg=owned;}
     if(!outarg){free(source);return 2;}
