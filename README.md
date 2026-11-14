@@ -1,6 +1,6 @@
-# YLANG++ (YCPP / Y++)
+# YLANG++ (YXX / Y++)
 
-YLANG++ (YCPP) is a hybrid C/C++ programming language project: it carries Y_'s interpreter/runtime model forward in C and provides a C++20 host, tooling, and native-function bridge. The language keeps Y_'s vocabulary rather than replacing it with C-like aliases.
+YLANG++ (YXX) is a hybrid C/C++ programming language project: it carries Y_'s interpreter/runtime model forward in C and provides a C++20 host, tooling, and native-function bridge. The language keeps Y_'s vocabulary rather than replacing it with C-like aliases.
 
 ## File formats
 
@@ -10,7 +10,7 @@ YLANG++ (YCPP) is a hybrid C/C++ programming language project: it carries Y_'s i
 | .hlypp | Header Library YCPP |
 | .yaq | External Adequit helper (same executable-helper role as Y_) |
 
-YCPP is separate from Y_. It preserves stash, define, give, when, doit, else, done, repeatwhile, execute, escape, writescrn >^, errstate <^, both, either, invert, !$name, and the !# directives.
+YXX is separate from Y_. It preserves stash, define, give, when, doit, else, done, repeatwhile, execute, escape, writescrn >^, errstate <^, both, either, invert, !$name, and the !# directives.
 
 ## Build
 
@@ -32,7 +32,7 @@ gy++ examples/hello.ycpp -o hello-native
 ./hello-native
 ~~~
 
-The `gy++` driver uses `clang++` by default (override with `LLVM_CLANGXX` or `--clang++ PATH`). Before invoking Clang++, it syntax-checks the entry .ycpp file and recursively checks every imported external or embedded .hlypp library. A syntax error in a library therefore stops compilation and reports the library filename and line. It then embeds the selected .ycpp entry source in a native executable and links the YCPP C runtime and embedded .hlypp libraries. External imports still resolve from their runtime paths.
+The `gy++` driver uses `clang++` by default (override with `LLVM_CLANGXX` or `--clang++ PATH`). Before invoking Clang++, it syntax-checks the entry .ycpp file and recursively checks every imported external or embedded .hlypp library. A syntax error in a library therefore stops compilation and reports the library filename and line. It then embeds the selected .ycpp entry source in a native executable and links the YXX C runtime and embedded .hlypp libraries. External imports still resolve from their runtime paths.
 
 CMake:
 
@@ -59,7 +59,7 @@ The Y_ interpreter core has been ported into YCPP's C runtime and linked into a 
 - A persistent interactive prompt when ylang++ is run without a source file.
 - Import-depth and loop-iteration limits.
 
-The original Y_ runtime's semantics and vocabulary are retained. YCPP-specific file extensions are used for source and header libraries.
+The original Y_ runtime's semantics and vocabulary are retained. YXX-specific file extensions are used for source and header libraries.
 
 ## C++ interoperability
 
@@ -87,13 +87,13 @@ int main(int argc, char **argv) {
 }
 ~~~
 
-Registered host functions are callable from YCPP source like ordinary functions. Supported bridge values are void, number, string, and boolean. String results are copied by the runtime before the callback returns. The bundled CLI registers cpp_add as a working example.
+Registered host functions are callable from YXX source like ordinary functions. Supported bridge values are void, number, string, and boolean. String results are copied by the runtime before the callback returns. The bundled CLI registers cpp_add as a working example.
 
-This is a host-function ABI bridge, not a general C++ header parser or automatic binding generator. `gy++` creates a native executable by embedding the selected YCPP source and linking the YCPP runtime; it does not translate each YCPP statement into standalone machine code. General C++ class/object marshalling remains future work.
+This is a host-function ABI bridge, not a general C++ header parser or automatic binding generator. `gy++` creates a native executable by embedding the selected YXX source and linking the YXX runtime; it does not translate each YXX statement into standalone machine code. General C++ class/object marshalling remains future work.
 
 ## Library behavior
 
-!#inclib %std/math.hlypp% resolves the embedded library by its filename (math) and executes it in the caller's environment. !#libinc "std/strings.hlypp" reads an external .hlypp file and executes it in the current environment. .hlypp replaces .hly for YCPP; .yaq remains the external Adequit extension.
+!#inclib %std/math.hlypp% resolves the embedded library by its filename (math) and executes it in the caller's environment. !#libinc "std/strings.hlypp" reads an external .hlypp file and executes it in the current environment. .hlypp replaces .hly for YXX; .yaq remains the external Adequit extension.
 
 ## Examples and tests
 
@@ -101,4 +101,4 @@ This is a host-function ABI bridge, not a general C++ header parser or automatic
 - tests/runtime.ycpp exercises runtime evaluation, recursion, loops, strings, memory, imports, and the C++ host bridge.
 - .github/workflows/build.yml builds with both Make and CMake and runs smoke tests.
 
-YCPP is experimental. It does not claim C++ language compatibility, static type checking, a C++ parser, or direct YCPP-to-machine-code translation.
+YXX is experimental. It does not claim C++ language compatibility, static type checking, a C++ parser, or direct YXX-to-machine-code translation.
