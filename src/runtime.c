@@ -243,18 +243,18 @@ static void tokenize(Parser *parser, const char *source) {
                 continue;
             }
             if (directive_length == 7 && strncmp(start, "yenable", 7) == 0) {
-                while (*cursor == ' ' || *cursor == '\\t') ++cursor;
-                if (*cursor++ != '=') { report_error(line, "expected '=' after !#yenable"); while (*cursor && *cursor != '\\n') ++cursor; continue; }
-                while (*cursor == ' ' || *cursor == '\\t') ++cursor;
-                if ((*cursor != '0' && *cursor != '1') || (cursor[1] && !isspace((unsigned char)cursor[1]) && cursor[1] != ';')) { report_error(line, "!#yenable expects 0 or 1"); while (*cursor && *cursor != '\\n') ++cursor; continue; }
+                while (*cursor == ' ' || *cursor == '\t') ++cursor;
+                if (*cursor++ != '=') { report_error(line, "expected '=' after !#yenable"); while (*cursor && *cursor != '\n') ++cursor; continue; }
+                while (*cursor == ' ' || *cursor == '\t') ++cursor;
+                if ((*cursor != '0' && *cursor != '1') || (cursor[1] && !isspace((unsigned char)cursor[1]) && cursor[1] != ';')) { report_error(line, "!#yenable expects 0 or 1"); while (*cursor && *cursor != '\n') ++cursor; continue; }
                 token.kind = T_YENABLE; token.text = copy_range(cursor, 1); ++cursor; add_token(parser, token); continue;
             }
             if (directive_length == 7 && strncmp(start, "yimport", 7) == 0) {
-                while (*cursor == ' ' || *cursor == '\\t') ++cursor;
-                if (*cursor != '\"') { report_error(line, "expected a quoted .yc path after !#yimport"); while (*cursor && *cursor != '\\n') ++cursor; continue; }
+                while (*cursor == ' ' || *cursor == '\t') ++cursor;
+                if (*cursor != '\"') { report_error(line, "expected a quoted .yc path after !#yimport"); while (*cursor && *cursor != '\n') ++cursor; continue; }
                 ++cursor; const char *path_start = cursor;
-                while (*cursor && *cursor != '\"' && *cursor != '\\n') ++cursor;
-                if (*cursor != '\"' || cursor == path_start) { report_error(line, "expected a non-empty .yc path after !#yimport"); while (*cursor && *cursor != '\\n') ++cursor; continue; }
+                while (*cursor && *cursor != '\"' && *cursor != '\n') ++cursor;
+                if (*cursor != '\"' || cursor == path_start) { report_error(line, "expected a non-empty .yc path after !#yimport"); while (*cursor && *cursor != '\n') ++cursor; continue; }
                 token.kind = T_YIMPORT; token.text = copy_range(path_start, (size_t)(cursor - path_start)); ++cursor; add_token(parser, token); continue;
             }
             if (directive_length == 6 && strncmp(start, "libinc", 6) == 0) {
