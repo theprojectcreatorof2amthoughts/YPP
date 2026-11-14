@@ -26,6 +26,10 @@ jobs:
         run: |
           ./gy++ examples/hello.ycpp -o build/hello-native
           ./build/hello-native
+          ./gy++ examples/hello.ycpp -c -o build/hello-native.o
+          test -f build/hello-native.o
+          ./gy++ build/hello-native.o -o build/hello-object-linked
+          ./build/hello-object-linked
   cmake-build:
     runs-on: ubuntu-latest
     steps:
