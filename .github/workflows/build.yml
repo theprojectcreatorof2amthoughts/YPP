@@ -26,6 +26,15 @@ jobs:
         run: |
           ./gy++ examples/hello.ycpp -o build/hello-native
           ./build/hello-native
+          ./gy++ examples/hello.ycpp -c -o build/hello-native.o
+          test -f build/hello-native.o
+          ./gy++ build/hello-native.o -o build/hello-object-linked
+          ./build/hello-object-linked
+          ./ylang++ --check tests/y_import_program.ycpp
+          if ./ylang++ --check tests/y_import_without_enable.ycpp; then echo 'Y import unexpectedly allowed without enablement'; exit 1; fi
+          ./ylang++ tests/y_import_program.ycpp | grep -q '81'
+          ./gy++ tests/y_import_program.ycpp -o build/y-import-native
+          ./build/y-import-native | grep -q '81'
   cmake-build:
     runs-on: ubuntu-latest
     steps:

@@ -17,7 +17,7 @@ typedef enum {
     T_EOF, T_NAME, T_CUSTOM, T_NUMBER, T_STRING, T_LPAREN, T_RPAREN,
     T_COMMA, T_SEMI, T_PLUS, T_MINUS, T_STAR, T_SLASH, T_PERCENT,
     T_ASSIGN, T_EQ, T_NE, T_LT, T_LE, T_GT, T_GE, T_POWER, T_IDIV, T_CONCAT, T_OUTPUT, T_ERROR_OUTPUT,
-    T_LIBINC, T_EMBEDDED_LIBRARY, T_ADEQUIT
+    T_LIBINC, T_EMBEDDED_LIBRARY, T_ADEQUIT, T_YENABLE, T_YIMPORT
 } TokenKind;
 
 typedef struct { TokenKind kind; char *text; double number; int line; } Token;
@@ -50,7 +50,7 @@ struct Expr {
 };
 
 typedef enum { S_LOCAL, S_ASSIGN, S_EXPR, S_OUTPUT, S_ERROR_OUTPUT, S_MEMORY, S_INCLUDE,
-               S_EMBEDDED_INCLUDE, S_ADEQUIT,
+               S_EMBEDDED_INCLUDE, S_ADEQUIT, S_YENABLE, S_YIMPORT,
                S_FUNCTION, S_RETURN, S_IF, S_WHILE, S_BREAK } StmtKind;
 struct Stmt {
     StmtKind kind;
@@ -61,6 +61,7 @@ struct Stmt {
         Expr *expression;
         struct { char *name; Expr *size; } memory;
         char *embedded_library;
+        char *directive_path;
         struct { char *name; char **params; size_t count; Stmt *body; } function;
         struct { Expr *value; } returned;
         struct { Expr *condition; Stmt *yes, *no; } conditional;
@@ -72,6 +73,7 @@ static bool failed;
 static unsigned diagnostic_count;
 static int last_error_line;
 static bool collecting_tokens;
+static bool y_import_enabled;
 static const char *active_path = "<input>";
 
 static void report_error(int line, const char *message) {
@@ -239,6 +241,21 @@ static void tokenize(Parser *parser, const char *source) {
                 token.text = copy_range("input", 5);
                 add_token(parser, token);
                 continue;
+            }
+            if (directive_length == 7 && strncmp(start, "yenable", 7) == 0) {
+                while (*cursor == ' ' || *cursor == '\t') ++cursor;
+                if (*cursor++ != '=') { report_error(line, "expected '=' after !#yenable"); while (*cursor && *cursor != '\n') ++cursor; continue; }
+                while (*cursor == ' ' || *cursor == '\t') ++cursor;
+                if ((*cursor != '0' && *cursor != '1') || (cursor[1] && !isspace((unsigned char)cursor[1]) && cursor[1] != ';')) { report_error(line, "!#yenable expects 0 or 1"); while (*cursor && *cursor != '\n') ++cursor; continue; }
+                token.kind = T_YENABLE; token.text = copy_range(cursor, 1); ++cursor; add_token(parser, token); continue;
+            }
+            if (directive_length == 7 && strncmp(start, "yimport", 7) == 0) {
+                while (*cursor == ' ' || *cursor == '\t') ++cursor;
+                if (*cursor != '\"') { report_error(line, "expected a quoted .yc path after !#yimport"); while (*cursor && *cursor != '\n') ++cursor; continue; }
+                ++cursor; const char *path_start = cursor;
+                while (*cursor && *cursor != '\"' && *cursor != '\n') ++cursor;
+                if (*cursor != '\"' || cursor == path_start) { report_error(line, "expected a non-empty .yc path after !#yimport"); while (*cursor && *cursor != '\n') ++cursor; continue; }
+                token.kind = T_YIMPORT; token.text = copy_range(path_start, (size_t)(cursor - path_start)); ++cursor; add_token(parser, token); continue;
             }
             if (directive_length == 6 && strncmp(start, "libinc", 6) == 0) {
                 token.kind = T_LIBINC;
@@ -547,6 +564,10 @@ static Stmt *parse_block(Parser *p, bool stop_at_else) {
             stmt->as.expression = new_expr(E_VALUE, start.line);
             stmt->as.expression->as.value.kind = V_STRING;
             stmt->as.expression->as.value.as.string = previous(p)->text;
+        } else if (match(p, T_YENABLE)) {
+            stmt = new_stmt(S_YENABLE, start.line); stmt->as.directive_path = previous(p)->text;
+        } else if (match(p, T_YIMPORT)) {
+            stmt = new_stmt(S_YIMPORT, start.line); stmt->as.directive_path = previous(p)->text;
         } else if (peek(p)->kind == T_CUSTOM || peek(p)->kind == T_NAME) {
             Token name = *peek(p); ++p->at;
             if (match(p, T_ASSIGN)) {
@@ -1089,6 +1110,16 @@ static Result execute(Stmt *stmt, Env *env) {
             free(library_name);
             break;
         }
+        case S_YENABLE: y_import_enabled = strcmp(stmt->as.directive_path, "1") == 0; break;
+        case S_YIMPORT: {
+            const char *path = stmt->as.directive_path;
+            size_t path_length = strlen(path);
+            if (!y_import_enabled) { report_error(stmt->line, "!#yimport requires !#yenable = 1 first"); break; }
+            if (path_length <= 3 || strcmp(path + path_length - 3, ".yc") != 0) { report_error(stmt->line, "!#yimport must name a .yc Y_ source file"); break; }
+            char *module_source = read_entire_file(path, NULL);
+            if (module_source) { run_source(module_source, path, env); free(module_source); } else failed = true;
+            break;
+        }
         case S_ADEQUIT: {
             Value path = evaluate(stmt->as.expression, env);
             if (path.kind != V_STRING) { report_error(stmt->line, "!#adeq expects a quoted .yaq path"); break; }
@@ -1156,6 +1187,7 @@ static bool run_source(const char *source, const char *path, Env *env) {
 int ypp_runtime_run_source(const char *source, const char *path) {
     failed = false;
     diagnostic_count = 0;
+    y_import_enabled = false;
     if (!source) { report_error(1, "missing embedded source"); return 2; }
     Env *globals = new_env(NULL);
     (void)run_source(source, path ? path : "<embedded>", globals);
@@ -1164,7 +1196,7 @@ int ypp_runtime_run_source(const char *source, const char *path) {
 
 static bool check_source_recursive(const char *source, const char *path, unsigned depth);
 
-static bool check_statement_imports(Stmt *stmt, unsigned depth) {
+static bool check_statement_imports(Stmt *stmt, unsigned depth, bool *y_enabled) {
     for (; stmt && !failed; stmt = stmt->next) {
         if (stmt->kind == S_INCLUDE) {
             Expr *path_expr = stmt->as.expression;
@@ -1182,6 +1214,18 @@ static bool check_statement_imports(Stmt *stmt, unsigned depth) {
             if (!library_source) { failed = true; return false; }
             bool okay = check_source_recursive(library_source, path, depth + 1);
             free(library_source);
+            if (!okay) return false;
+        } else if (stmt->kind == S_YENABLE) {
+            *y_enabled = strcmp(stmt->as.directive_path, "1") == 0;
+        } else if (stmt->kind == S_YIMPORT) {
+            const char *path = stmt->as.directive_path;
+            size_t length = strlen(path);
+            if (!*y_enabled) { report_error(stmt->line, "!#yimport requires !#yenable = 1 first"); return false; }
+            if (length <= 3 || strcmp(path + length - 3, ".yc") != 0) { report_error(stmt->line, "!#yimport must name a .yc Y_ source file"); return false; }
+            char *module_source = read_entire_file(path, NULL);
+            if (!module_source) { failed = true; return false; }
+            bool okay = check_source_recursive(module_source, path, depth + 1);
+            free(module_source);
             if (!okay) return false;
         } else if (stmt->kind == S_ADEQUIT) {
             Expr *path_expr = stmt->as.expression;
@@ -1223,12 +1267,12 @@ static bool check_statement_imports(Stmt *stmt, unsigned depth) {
             if (!okay) return false;
         }
         if (stmt->kind == S_FUNCTION &&
-            !check_statement_imports(stmt->as.function.body, depth)) return false;
+            !check_statement_imports(stmt->as.function.body, depth, y_enabled)) return false;
         if (stmt->kind == S_IF &&
-            (!check_statement_imports(stmt->as.conditional.yes, depth) ||
-             !check_statement_imports(stmt->as.conditional.no, depth))) return false;
+            (!check_statement_imports(stmt->as.conditional.yes, depth, y_enabled) ||
+             !check_statement_imports(stmt->as.conditional.no, depth, y_enabled))) return false;
         if (stmt->kind == S_WHILE &&
-            !check_statement_imports(stmt->as.loop.body, depth)) return false;
+            !check_statement_imports(stmt->as.loop.body, depth, y_enabled)) return false;
     }
     return !failed;
 }
@@ -1246,7 +1290,8 @@ static bool check_source_recursive(const char *source, const char *path, unsigne
     Stmt *program = failed ? NULL : parse_block(&parser, false);
     if (!failed && peek(&parser)->kind != T_EOF)
         report_error(peek(&parser)->line, "unexpected trailing input");
-    bool okay = !failed && diagnostic_count == diagnostics_before && check_statement_imports(program, depth);
+    bool y_enabled = false;
+    bool okay = !failed && diagnostic_count == diagnostics_before && check_statement_imports(program, depth, &y_enabled);
     active_path = old_path;
     return okay && diagnostic_count == diagnostics_before;
 }
