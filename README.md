@@ -6,8 +6,8 @@ YLANG++ (YXX) is a hybrid C/C++ programming language project: it carries Y_'s in
 
 | Extension | Purpose |
 |---|---|
-| .ycpp | YCPP source program |
-| .hlypp | Header Library YCPP |
+| .ycpp | YXX source program |
+| .hlypp | Header Library YXX |
 | .yaq | External Adequit helper (same executable-helper role as Y_) |
 
 YXX is separate from Y_. It preserves stash, define, give, when, doit, else, done, repeatwhile, execute, escape, writescrn >^, errstate <^, both, either, invert, !$name, and the !# directives.
