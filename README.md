@@ -1,4 +1,9 @@
-# YLANG++ (YXX / Y++)
+<div align="center">
+  <img src="docs/logo++.png" alt="Y++ Logo" width="140" />
+  <h1>YLANG++ (YXX/Y++)</h1>
+  <p>A hybrid programming language project made in C++20.</p>
+</div>
+
 
 YLANG++ (YXX) is a hybrid C/C++ programming language project: it carries Y_'s interpreter/runtime model forward in C and provides a C++20 host, tooling, and native-function bridge. The language keeps Y_'s vocabulary rather than replacing it with C-like aliases.
 
