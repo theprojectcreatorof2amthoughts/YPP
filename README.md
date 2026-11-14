@@ -46,7 +46,7 @@ Use make clean to remove Make-generated artifacts. Both build systems discover .
 
 ## Runtime capabilities
 
-The Y_ interpreter core has been ported into YCPP's C runtime and linked into a C++20 executable. It provides:
+The Y_ interpreter core has been ported into YXX's C runtime and linked into a C++20 executable. It provides:
 - Values: void, number, string, boolean, function, and memory.
 - Nested environments, lexical closures, user-defined functions, recursion, and give.
 - when / doit / else / done, repeatwhile / execute / done, and escape.
