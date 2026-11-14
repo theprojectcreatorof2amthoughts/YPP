@@ -130,7 +130,7 @@ int main(int argc,char**argv) {
     if(debug)args[a++]="-g";
     for(size_t i=0;i<warning_count;++i)args[a++]=(char*)warnings[i];
     args[a++]="-I";args[a++]=inc;args[a++]="-I";args[a++]=include_dir;
-    if(has_extension(input,".o")){args[a++]=(char*)input;args[a++]=rt;args[a++]=mem;args[a++]=io;args[a++]=(char*)GYPP_EMBEDDED_SOURCE;args[a++]="-lm";}
+    if(has_extension(input,".o")){args[a++]=(char*)input;args[a++]="-x";args[a++]="c";args[a++]=rt;args[a++]=mem;args[a++]=io;args[a++]=(char*)GYPP_EMBEDDED_SOURCE;args[a++]="-lm";}
     else {args[a++]="-x";args[a++]="c";args[a++]=wrapper;if(!compile_only){args[a++]=rt;args[a++]=mem;args[a++]=io;args[a++]=(char*)GYPP_EMBEDDED_SOURCE;args[a++]="-lm";}}
     if(compile_only) { args[a++]="-c"; }
     args[a++]="-o";args[a++]=(char*)outarg;args[a]=NULL;
