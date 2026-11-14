@@ -1,0 +1,3 @@
+!#yenable = 1
+!#yimport "tests/y_import_module.yc"
+writescrn >^ y_square(9)
