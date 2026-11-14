@@ -113,6 +113,7 @@ int main(int argc,char**argv) {
         else input=argv[i];
     }
     if(!input||(!has_extension(input,".ycpp")&&!has_extension(input,".o"))){usage(stderr);return 2;}
+    if (has_extension(input,".o") && compile_only) { fputs("gy++: -c cannot be used when linking an existing object file\\n",stderr); return 2; }
     if (has_extension(input,".ycpp") && ypp_runtime_check_file(input) != 0) return 1;
     char *source=has_extension(input,".ycpp")?read_source(input):NULL;if(has_extension(input,".ycpp")&&!source)return 1;
     char *owned=NULL;if(!outarg){owned=default_output(input);outarg=owned;}
@@ -131,7 +132,8 @@ int main(int argc,char**argv) {
     args[a++]="-I";args[a++]=inc;args[a++]="-I";args[a++]=include_dir;
     if(has_extension(input,".o")){args[a++]=(char*)input;args[a++]=rt;args[a++]=mem;args[a++]=io;args[a++]=(char*)GYPP_EMBEDDED_SOURCE;args[a++]="-lm";}
     else {args[a++]="-x";args[a++]="c";args[a++]=wrapper;if(!compile_only){args[a++]=rt;args[a++]=mem;args[a++]=io;args[a++]=(char*)GYPP_EMBEDDED_SOURCE;args[a++]="-lm";}}
-    if(compile_only)args[a++]="-c";args[a++]="-o";args[a++]=(char*)outarg;args[a]=NULL;
+    if(compile_only) { args[a++]="-c"; }
+    args[a++]="-o";args[a++]=(char*)outarg;args[a]=NULL;
     int result=run(args);
     remove(wrapper);free(source);free(owned);free(wrapper);free(inc);free(include_dir);free(rt);free(mem);free(io);
     return result;
