@@ -1,0 +1,3 @@
+define y_square(n)
+    give n * n
+done
