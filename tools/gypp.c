@@ -20,9 +20,9 @@
 
 static void usage(FILE *f) {
     fputs("gy++ - YLANG++ native compiler (Clang++ toolchain)\n"
-          "Usage: gy++ <program.ycpp> [-o output] [-O0|-O1|-O2|-O3] [-g]\n"
+          "Usage: gy++ <program.ycpp> [-c] [-o output] [-O0|-O1|-O2|-O3] [-g]\n"
           "Options: --clang++ PATH, --xx-warn-all, --xx-warn-extra, --xx-optimize=0..3,\n"
-          "         -Wall, -Wextra, -Wpedantic, -Werror, -Wno-WARNING,\n"
+          "         -c (emit a relocatable object), -Wall, -Wextra, -Wpedantic, -Werror, -Wno-WARNING,\n"
           "         -Werror=WARNING, -g, --help, --version\n"
           "The source is embedded into a native executable linked with the YPP runtime.\n", f);
 }
@@ -93,7 +93,7 @@ static int run(char *const argv[]) {
 }
 int main(int argc,char**argv) {
     const char *clang=getenv("LLVM_CLANGXX"),*opt="-O0",*input=NULL,*outarg=NULL;
-    const char *warnings[MAX_FLAGS];size_t warning_count=0;int debug=0;
+    const char *warnings[MAX_FLAGS];size_t warning_count=0;int debug=0,compile_only=0;
     char *wrapper=NULL,*inc=NULL,*include_dir=NULL,*rt=NULL,*mem=NULL,*io=NULL;
     if(!clang||!*clang)clang="clang++";
     for(int i=1;i<argc;++i) {
@@ -103,6 +103,7 @@ int main(int argc,char**argv) {
         else if(!strcmp(argv[i],"--clang++")){if(++i>=argc){fputs("gy++: missing path after --clang++\n",stderr);return 2;}clang=argv[i];}
         else if(!strncmp(argv[i],"-O",2)){if(strcmp(argv[i],"-O0")&&strcmp(argv[i],"-O1")&&strcmp(argv[i],"-O2")&&strcmp(argv[i],"-O3")){fprintf(stderr,"gy++: invalid optimization '%s'\n",argv[i]);return 2;}opt=argv[i];}
         else if(!strcmp(argv[i],"-g"))debug=1;
+        else if(!strcmp(argv[i],"-c"))compile_only=1;
         else if(!strcmp(argv[i],"--xx-warn-all")){if(warning_count==MAX_FLAGS)return 2;warnings[warning_count++]="-Wall";}
         else if(!strcmp(argv[i],"--xx-warn-extra")){if(warning_count==MAX_FLAGS)return 2;warnings[warning_count++]="-Wextra";}
         else if(!strncmp(argv[i],"--xx-optimize=",14)){const char *level=argv[i]+14;if(strlen(level)!=1||level[0]<'0'||level[0]>'3'){fprintf(stderr,"gy++: invalid optimization '%s'\n",argv[i]);return 2;}static char xx_opt[4];snprintf(xx_opt,sizeof(xx_opt),"-O%c",level[0]);opt=xx_opt;}
@@ -111,24 +112,26 @@ int main(int argc,char**argv) {
         else if(input){fputs("gy++: only one .ycpp entry file is accepted\n",stderr);return 2;}
         else input=argv[i];
     }
-    if(!input||!has_extension(input,".ycpp")){usage(stderr);return 2;}
-    if (ypp_runtime_check_file(input) != 0) return 1;
-    char *source=read_source(input);if(!source)return 1;
+    if(!input||(!has_extension(input,".ycpp")&&!has_extension(input,".o"))){usage(stderr);return 2;}
+    if (has_extension(input,".ycpp") && ypp_runtime_check_file(input) != 0) return 1;
+    char *source=has_extension(input,".ycpp")?read_source(input):NULL;if(has_extension(input,".ycpp")&&!source)return 1;
     char *owned=NULL;if(!outarg){owned=default_output(input);outarg=owned;}
+    if(compile_only && !has_extension(outarg,".o")){size_t n=strlen(outarg)+3;char *obj=malloc(n);if(!obj){free(source);free(owned);return 2;}snprintf(obj,n,"%s.o",outarg);free(owned);owned=obj;outarg=owned;}
     if(!outarg){free(source);return 2;}
     size_t wn=strlen(outarg)+16;wrapper=malloc(wn);
     inc=join(GYPP_PROJECT_ROOT,"src");include_dir=join(GYPP_PROJECT_ROOT,"include");
     rt=join(GYPP_PROJECT_ROOT,"src/runtime.c");mem=join(GYPP_PROJECT_ROOT,"src/memory.c");io=join(GYPP_PROJECT_ROOT,"src/file_io.c");
     if(!wrapper||!inc||!include_dir||!rt||!mem||!io){fputs("gy++: out of memory\n",stderr);free(source);free(owned);free(wrapper);free(inc);free(include_dir);free(rt);free(mem);free(io);return 2;}
     snprintf(wrapper,wn,"%s.gypp.c",outarg);
-    if(!wrapper_file(wrapper,source,input)){free(source);free(owned);free(wrapper);free(inc);free(include_dir);free(rt);free(mem);free(io);return 2;}
+    if(source && !wrapper_file(wrapper,source,input)){free(source);free(owned);free(wrapper);free(inc);free(include_dir);free(rt);free(mem);free(io);return 2;}
     char *args[160];size_t a=0;
     args[a++]=(char*)clang;args[a++]="-std=c11";args[a++]="-Wall";args[a++]="-Wextra";args[a++]="-Wpedantic";args[a++]=(char*)opt;
     if(debug)args[a++]="-g";
     for(size_t i=0;i<warning_count;++i)args[a++]=(char*)warnings[i];
     args[a++]="-I";args[a++]=inc;args[a++]="-I";args[a++]=include_dir;
-    args[a++]="-x";args[a++]="c";args[a++]=wrapper;args[a++]=rt;args[a++]=mem;args[a++]=io;args[a++]=(char*)GYPP_EMBEDDED_SOURCE;
-    args[a++]="-lm";args[a++]="-o";args[a++]=(char*)outarg;args[a]=NULL;
+    if(has_extension(input,".o")){args[a++]=(char*)input;args[a++]=rt;args[a++]=mem;args[a++]=io;args[a++]=(char*)GYPP_EMBEDDED_SOURCE;args[a++]="-lm";}
+    else {args[a++]="-x";args[a++]="c";args[a++]=wrapper;if(!compile_only){args[a++]=rt;args[a++]=mem;args[a++]=io;args[a++]=(char*)GYPP_EMBEDDED_SOURCE;args[a++]="-lm";}}
+    if(compile_only)args[a++]="-c";args[a++]="-o";args[a++]=(char*)outarg;args[a]=NULL;
     int result=run(args);
     remove(wrapper);free(source);free(owned);free(wrapper);free(inc);free(include_dir);free(rt);free(mem);free(io);
     return result;
